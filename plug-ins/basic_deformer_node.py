@@ -14,7 +14,19 @@ class BasicDeformerNode(mpx.MPxDeformerNode):
         super(BasicDeformerNode, self).__init__()
         
     def deform(self, data_block, geo_iter, matrix, multi_index):
-        print("Todo: Deform()")
+        envelop = data_block.inputValue(self.envelope).asFloat()
+        
+        if envelop == 0:
+            return
+        
+        geo_iter.reset()
+        while not geo_iter.isDone():
+            if geo_iter.index() % 2 == 0:
+                pt = geo_iter.position()
+                pt.y += (100 * envelop)
+                geo_iter.setPosition(pt)
+            
+            geo_iter.next()
 
     @classmethod
     def creator(cls):
