@@ -51,11 +51,14 @@ if __name__ == "__main__":
     # reloading scene and so on
     # not used in production
     
+    # creation new file to get rid of dependencies for current plugin
     cmds.file(new=True, force=True)
     
+    # load and then unload plugin
     plugin_name = "basic_deformer_node.py"
     cmds.evalDeferred('if cmds.pluginInfo("{0}", q=True, loaded=True): cmds.unloadPlugin("{0}")'.format(plugin_name))
     cmds.evalDeferred('if not cmds.pluginInfo("{0}", q=True, loaded=True): cmds.loadPlugin("{0}")'.format(plugin_name))
     
+    # load test scene, select nurbPlane1 and add basic_deformer_node to object
     cmds.evalDeferred('cmds.file("C:/Users/intel/Documents/maya/2019/basic_deformer_test.ma", open=True, force=True)')
     cmds.evalDeferred('cmds.select("nurbsPlane1"); cmds.deformer(type="{0}")'.format(BasicDeformerNode.TYPE_NAME))
