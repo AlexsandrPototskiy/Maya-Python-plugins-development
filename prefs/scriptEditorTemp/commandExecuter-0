@@ -1,0 +1,4 @@
+import maya.cmds as cmds
+
+cmds.commandPort(name = ":20180", sourceType = "mel")
+cmds.commandPort(name = ":20181", sourceType = "python")
