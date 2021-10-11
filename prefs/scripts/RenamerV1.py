@@ -1,9 +1,12 @@
 import maya.cmds as cmds
+
+# main QT imports
 from shiboken2 import wrapInstance
 from PySide2 import QtCore, QtWidgets
 import maya.OpenMayaUI as omui
 
 
+# Core UI logic
 # get instance of Maya main window via  wrapInstance and Maya API
 def get_main_window():
 	main = omui.MQtUtil.mainWindow()
@@ -12,11 +15,11 @@ def get_main_window():
 
 # base main UI
 class MainWindow(QtWidgets.QDialog):
-	
 	def __init__(self, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
 
 
+# Core validation logic
 # main entry point of validation
 def validate_scene_objects():
 	# reading configuration 
@@ -46,28 +49,35 @@ def read_config_file():
 
 # validate given object base on configuration
 def validate(scene_objects, configuration):
-	not_founded_objects = []
-	strange_objects = []
+	not_fount_objects = []
+	other_objects = []
 	
 	for c in configuration:
+		# adding to log objects that was not fount in scene
 		if c not in scene_objects:
-			not_founded_objects.append(c)
+			not_fount_objects.append(c)
 		
+		# adding to log objects that are not listed in configuration
 		for o in scene_objects:
 			if o not in configuration:
-				strange_objects.append(o)
+				other_objects.append(o)
 	
-	if len(not_founded_objects) > 0:
+	# log not fount objects
+	if len(not_fount_objects) > 0:
 		print "Not Founded Objects in scene"
-		for n in not_founded_objects:
+		for n in not_fount_objects:
 			print n
-			
-	if len(strange_objects) > 0:
-		print "Other Objects was located - consider to delete them from scene"
-		for o in strange_objects:
-			print o
 	
-			
-validate_scene_objects()
-w = MainWindow(get_main_window())
-w.show()
+	# log other objects
+	if len(other_objects) > 0:
+		print "Other Objects was located - consider to delete them from scene"
+		for o in other_objects:
+			print o
+		
+# Core ReNaming Logic
+	
+# run script
+if __name__ == "__main__":
+	validate_scene_objects()
+	w = MainWindow(get_main_window())
+	w.show()
