@@ -15,16 +15,52 @@ def get_main_window():
 
 # base main UI
 class MainWindow(QtWidgets.QDialog):
+	
+	ON_VALIDATION_BTTN_CLICK = QtCore.Signal()
+	ON_RENAME_BTTN_CLICK = QtCore.Signal(str)
+
+	
 	def __init__(self, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
 		self.__build_ui()
 
 	
 	def __build_ui(self):
-		# creating layout
-		validation_layout = QtWidgets.QHBoxLayout(self)
-		self._validateButton = QtWidgets.QPushButton("Validate Scene")
-		validation_layout.addWidget(self._validateButton)
+		#setting title
+		self.setWindowTitle("Asset Validator")
+		
+		# main windoww grp
+		app_layout = QtWidgets.QVBoxLayout(self)
+		
+		# creating validation layout
+		validation_layout = QtWidgets.QHBoxLayout()
+		self.__validate_bttn = QtWidgets.QPushButton("Validate Scene")
+		self.__validate_bttn.clicked.connect(self.__validate_btton_slot)
+		validation_layout.addWidget(self.__validate_bttn)
+		
+		# adding to main grp
+		app_layout.addLayout(validation_layout)
+		
+		# creating renamer layout
+		renamer_layout = QtWidgets.QVBoxLayout()
+		renamer_layout.addWidget(QtWidgets.QLabel("Rename Selected Object With Name:"))
+		self.__names_box = QtWidgets.QComboBox()
+		self.__rename_btn = QtWidgets.QPushButton("Rename Selected")
+		self.__rename_btn.clicked.connect(self.__rename_bttn_slot)
+		renamer_layout.addWidget(self.__names_box)
+		renamer_layout.addWidget(self.__rename_btn)
+		
+		# adding to main grp
+		app_layout.addLayout(renamer_layout)
+		
+	def __validate_btton_slot(self):
+		self.ON_VALIDATION_BTTN_CLICK.emit()
+	
+	def __rename_bttn_slot(self):
+		self.ON_RENAME_BTTN_CLICK.emit("test_name_from_combo_box")
+	
+	def fix_ui_validation_log(log):
+		print(log)
 		
 
 
@@ -82,11 +118,24 @@ def validate(scene_objects, configuration):
 		print "Other Objects was located - consider to delete them from scene"
 		for o in other_objects:
 			print o
-		
+
+
+
 # Core ReNaming Logic
-	
-# run script
+# Main entry point of renamer
+def rename_by_name(new_name):
+	print("{0} -> {1}".format("current_test_name", new_name))
+
+
+
+# run script file
 if __name__ == "__main__":
-	validate_scene_objects()
+	# crating window instance with Maya Window as Parent
 	w = MainWindow(get_main_window())
+	
+	# connection ui inputs and validation logic
+	w.ON_VALIDATION_BTTN_CLICK.connect(validate_scene_objects)
+	w.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
+	
+	# starting tool
 	w.show()
