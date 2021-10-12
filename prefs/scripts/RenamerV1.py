@@ -32,10 +32,17 @@ class MainWindow(QtWidgets.QDialog):
 		app_layout = QtWidgets.QVBoxLayout(self)
 		
 		# creating validation layout
-		validation_layout = QtWidgets.QHBoxLayout()
-		self.__validate_bttn = QtWidgets.QPushButton("Validate Scene")
+		validation_layout = QtWidgets.QVBoxLayout()
+		self.__validate_bttn = QtWidgets.QPushButton("Validate")
 		self.__validate_bttn.clicked.connect(self.__validate_btton_slot)
+		self.__log_list = QtWidgets.QTableWidget()
+		self.__log_list.setColumnCount(2)
+		self.__log_list.setHorizontalHeaderLabels(["Object Name", "Validation Status"])
+	
+		validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
 		validation_layout.addWidget(self.__validate_bttn)
+		validation_layout.addWidget(QtWidgets.QLabel("Status Log:"))
+		validation_layout.addWidget(self.__log_list)
 		
 		# adding to main grp
 		app_layout.addLayout(validation_layout)
@@ -58,65 +65,88 @@ class MainWindow(QtWidgets.QDialog):
 	def __rename_bttn_slot(self):
 		self.ON_RENAME_BTTN_CLICK.emit("test_name_from_combo_box")
 	
-	def fix_ui_validation_log(log):
-		print(log)
+	# fill ui log list with given items
+	def fill_ui_validation_log(self, log):
+		data = log.get_log_data()
+		self.__log_list.setCo
 		
+		
+
+# Core Data Classes
+# Validation log data class
+class ValidationLog():
+	def __init__(self):
+		self.__current_log = {}
+	
+	# adding log item
+	def add_log_item(self, key, value):
+		print("Adding Log: {0} -> {1}".format(key, value))
+		# todo validation for keys and values
+		self.__current_log[key] = value
+	
+	# get all log data
+	def get_log_data(self):
+		return self.__current_log
 
 
 # Core validation logic
-# main entry point of validation
-def validate_scene_objects():
-	# reading configuration 
-	configuration = read_config_file()
+class AssetValidator():
+	
+	def __init__(self):
+		self.__output_listners = {}
 		
-	# get current scene objects
-	current_scene_objects = cmds.ls(geometry=True)
-	
-	# shape_suffix to remove from shape node
-	shape_suffix = "Shape"
-	
-	# current geometry list
-	filtred_objects = []
-	
-	# removing suffix
-	for scene_object in current_scene_objects:
-		filtred_objects.append(scene_object.replace(shape_suffix, ''))
-	
-	# validating
-	validate(filtred_objects, configuration)
-	
-# read external configuration file
-def read_config_file():
-	return ["Intern", "Break", "Apple"]
-	
-# validate given object base on configuration
-def validate(scene_objects, configuration):
-	not_fount_objects = []
-	other_objects = []
-	
-	for c in configuration:
-		# adding to log objects that was not fount in scene
-		if c not in scene_objects:
-			not_fount_objects.append(c)
+	def validate_names(self):
+		# reading configuration 
+		configuration = self.__read_config_file()
+			
+		# get current scene objects
+		current_scene_objects = cmds.ls(geometry=True)
 		
-		# adding to log objects that are not listed in configuration
-		for o in scene_objects:
-			if o not in configuration:
-				other_objects.append(o)
+		# shape_suffix to remove from shape node
+		shape_suffix = "Shape"
+		
+		# current geometry list
+		filtred_objects = []
+		
+		# removing suffix
+		for scene_object in current_scene_objects:
+			filtred_objects.append(scene_object.replace(shape_suffix, ''))
+		
+		# validating
+		validation_data = self.__validate(filtred_objects, configuration)
+		
+		self.__notify_listners(validation_data)
+		
 	
-	# printing log list for not fount objects
-	if len(not_fount_objects) > 0:
-		print "Not Founded Objects in scene"
-		for n in not_fount_objects:
-			print n
+	# read external configuration file
+	def __read_config_file(self):
+		return ["Intern", "Break", "Apple", "Tire", "Intern", "Banana"]
+		
+	# validate given object base on configuration
+	def __validate(self, scene_objects, configuration):
+		
+		data = ValidationLog()
+		
+		for c in configuration:
+			# adding to log objects that was not fount in scene
+			if c not in scene_objects:
+				validation_status = "Missing"
+				data.add_log_item(c, validation_status)
+				
+		return data
 	
-	# printing log list for other objects
-	if len(other_objects) > 0:
-		print "Other Objects was located - consider to delete them from scene"
-		for o in other_objects:
-			print o
-
-
+	# notify all listners with current log
+	def __notify_listners(self, log):
+		for listenerKey in self.__output_listners:
+			self.__output_listners[listenerKey](log)
+	
+	# add log output listner
+	def add_listener(self, listener):
+		listener_id = id(listener)
+		print("Adding Listner with ID: {0}".format(listener_id))
+		self.__output_listners[listener_id] = listener
+		
+	
 
 # Core ReNaming Logic
 # Main entry point of Renamer
@@ -130,9 +160,13 @@ if __name__ == "__main__":
 	# crating window instance with Maya Window as Parent
 	w = MainWindow(get_main_window())
 	
+	validator = AssetValidator()
+	
 	# connection ui inputs and validation logic
-	w.ON_VALIDATION_BTTN_CLICK.connect(validate_scene_objects)
+	w.ON_VALIDATION_BTTN_CLICK.connect(validator.validate_names)
 	w.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
+	
+	validator.add_listener(w.fill_ui_validation_log)
 	
 	# starting tool
 	w.show()
