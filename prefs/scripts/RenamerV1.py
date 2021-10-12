@@ -34,11 +34,11 @@ class MainWindow(QtWidgets.QDialog):
 		# creating validation layout
 		validation_layout = QtWidgets.QVBoxLayout()
 		self.__validate_bttn = QtWidgets.QPushButton("Validate")
-		self.__validate_bttn.clicked.connect(self.__validate_btton_slot)
+		self.__validate_bttn.clicked.connect(self.__validate_bttn_slot)
 		self.__log_list = QtWidgets.QTableWidget()
 		self.__log_list.setColumnCount(2)
 		self.__log_list.setHorizontalHeaderLabels(["Object Name", "Validation Status"])
-	
+
 		validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
 		validation_layout.addWidget(self.__validate_bttn)
 		validation_layout.addWidget(QtWidgets.QLabel("Status Log:"))
@@ -59,7 +59,7 @@ class MainWindow(QtWidgets.QDialog):
 		# adding to main grp
 		app_layout.addLayout(renamer_layout)
 		
-	def __validate_btton_slot(self):
+	def __validate_bttn_slot(self):
 		self.ON_VALIDATION_BTTN_CLICK.emit()
 	
 	def __rename_bttn_slot(self):
@@ -68,9 +68,18 @@ class MainWindow(QtWidgets.QDialog):
 	# fill ui log list with given items
 	def fill_ui_validation_log(self, log):
 		data = log.get_log_data()
-		self.__log_list.setCo
+		print(data)
 		
+		row = 0
+		for itemKey in data:
+			self.__log_list.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
+			self.__log_list.setItem(row, 1, QtWidgets.QTableWidgetItem(data[itemKey]))
+			row += 1
 		
+		print("rows amount {0}".format(row))
+		self.__log_list.resizeColumnsToContents()
+
+	
 
 # Core Data Classes
 # Validation log data class
