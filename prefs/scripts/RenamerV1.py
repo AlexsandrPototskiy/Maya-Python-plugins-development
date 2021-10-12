@@ -1,19 +1,18 @@
 import maya.cmds as cmds
 
-# main QT imports
+# Main QT imports
 from shiboken2 import wrapInstance
 from PySide2 import QtCore, QtWidgets
 import maya.OpenMayaUI as omui
 
 
-# Core UI logic
-# get instance of Maya main window via  wrapInstance and Maya API
+# Core UI Implementation
+# Get instance of Maya main window via  wrapInstance and Maya API
 def get_main_window():
 	main = omui.MQtUtil.mainWindow()
 	return wrapInstance(long(main), QtWidgets.QWidget)
 
-
-# base main UI
+# UI
 class MainWindow(QtWidgets.QDialog):
 	
 	ON_VALIDATION_BTTN_CLICK = QtCore.Signal()
@@ -86,12 +85,10 @@ def validate_scene_objects():
 	# validating
 	validate(filtred_objects, configuration)
 	
-
 # read external configuration file
 def read_config_file():
 	return ["Intern", "Break", "Apple"]
 	
-
 # validate given object base on configuration
 def validate(scene_objects, configuration):
 	not_fount_objects = []
@@ -107,13 +104,13 @@ def validate(scene_objects, configuration):
 			if o not in configuration:
 				other_objects.append(o)
 	
-	# log not fount objects
+	# printing log list for not fount objects
 	if len(not_fount_objects) > 0:
 		print "Not Founded Objects in scene"
 		for n in not_fount_objects:
 			print n
 	
-	# log other objects
+	# printing log list for other objects
 	if len(other_objects) > 0:
 		print "Other Objects was located - consider to delete them from scene"
 		for o in other_objects:
@@ -122,13 +119,13 @@ def validate(scene_objects, configuration):
 
 
 # Core ReNaming Logic
-# Main entry point of renamer
+# Main entry point of Renamer
 def rename_by_name(new_name):
 	print("{0} -> {1}".format("current_test_name", new_name))
 
 
 
-# run script file
+# Connect UI with logical part and run Tool
 if __name__ == "__main__":
 	# crating window instance with Maya Window as Parent
 	w = MainWindow(get_main_window())
