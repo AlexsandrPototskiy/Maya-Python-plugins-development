@@ -17,6 +17,15 @@ def get_main_window():
 class MainWindow(QtWidgets.QDialog):
 	def __init__(self, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
+		self.__build_ui()
+
+	
+	def __build_ui(self):
+		# creating layout
+		validation_layout = QtWidgets.QHBoxLayout(self)
+		self._validateButton = QtWidgets.QPushButton("Validate Scene")
+		validation_layout.addWidget(self._validateButton)
+		
 
 
 # Core validation logic
