@@ -18,12 +18,10 @@ class MainWindow(QtWidgets.QDialog):
 	ON_VALIDATION_BTTN_CLICK = QtCore.Signal()
 	ON_RENAME_BTTN_CLICK = QtCore.Signal(str)
 
-	
 	def __init__(self, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
 		self.__build_ui()
 
-	
 	def __build_ui(self):
 		#setting title
 		self.setWindowTitle("Asset Validator")
@@ -35,14 +33,14 @@ class MainWindow(QtWidgets.QDialog):
 		validation_layout = QtWidgets.QVBoxLayout()
 		self.__validate_bttn = QtWidgets.QPushButton("Validate")
 		self.__validate_bttn.clicked.connect(self.__validate_bttn_slot)
-		self.__log_list = QtWidgets.QTableWidget()
-		self.__log_list.setColumnCount(2)
-		self.__log_list.setHorizontalHeaderLabels(["Object Name", "Validation Status"])
+		self.__log_table = QtWidgets.QTableWidget()
+		self.__log_table.setColumnCount(2)
+		self.__log_table.setHorizontalHeaderLabels(["Object Name", "Validation Status"])
 
 		validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
 		validation_layout.addWidget(self.__validate_bttn)
 		validation_layout.addWidget(QtWidgets.QLabel("Status Log:"))
-		validation_layout.addWidget(self.__log_list)
+		validation_layout.addWidget(self.__log_table)
 		
 		# adding to main grp
 		app_layout.addLayout(validation_layout)
@@ -65,19 +63,19 @@ class MainWindow(QtWidgets.QDialog):
 	def __rename_bttn_slot(self):
 		self.ON_RENAME_BTTN_CLICK.emit("test_name_from_combo_box")
 	
-	# fill ui log list with given items
+	# fill ui log with given ValidationLog
 	def fill_ui_validation_log(self, log):
-		data = log.get_log_data()
-		print(data)
+		data = log.get_log_dict()
+		
+		self.__log_table.setRowCount(len(data))	
 		
 		row = 0
 		for itemKey in data:
-			self.__log_list.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
-			self.__log_list.setItem(row, 1, QtWidgets.QTableWidgetItem(data[itemKey]))
+			self.__log_table.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
+			self.__log_table.setItem(row, 1, QtWidgets.QTableWidgetItem(data[itemKey]))
 			row += 1
 		
-		print("rows amount {0}".format(row))
-		self.__log_list.resizeColumnsToContents()
+		self.__log_table.resizeRowsToContents()
 
 	
 
@@ -90,19 +88,34 @@ class ValidationLog():
 	# adding log item
 	def add_log_item(self, key, value):
 		print("Adding Log: {0} -> {1}".format(key, value))
-		# todo validation for keys and values
+		# TODO: add validation for exsiting keys
 		self.__current_log[key] = value
 	
 	# get all log data
-	def get_log_data(self):
+	def get_log_dict(self):
 		return self.__current_log
+
+
+# Core Tool Configuration provider
+class ToolConfigurationProvider():
+	def __init__(self):
+		self.__cached_configuration = []
+	
+	def reload(self):
+		# TODO: read data from file
+		self.__cached_configuration = ["Intern", "Break", "Apple", "Tire_FR", "Banana"]
+	
+	# get cached configuration
+	def get_configuration(self):
+		return self.__cached_configuration
 
 
 # Core validation logic
 class AssetValidator():
 	
-	def __init__(self):
+	def __init__(self, configuration_getter):
 		self.__output_listners = {}
+		self.__configuration_getter = configuration_getter
 		
 	def validate_names(self):
 		# reading configuration 
@@ -129,7 +142,7 @@ class AssetValidator():
 	
 	# read external configuration file
 	def __read_config_file(self):
-		return ["Intern", "Break", "Apple", "Tire", "Intern", "Banana"]
+		return self.__configuration_getter()
 		
 	# validate given object base on configuration
 	def __validate(self, scene_objects, configuration):
@@ -169,7 +182,11 @@ if __name__ == "__main__":
 	# crating window instance with Maya Window as Parent
 	w = MainWindow(get_main_window())
 	
-	validator = AssetValidator()
+	# main configuration
+	configuration_provider = ToolConfigurationProvider()
+	configuration_provider.reload()
+	
+	validator = AssetValidator(configuration_provider.get_configuration)
 	
 	# connection ui inputs and validation logic
 	w.ON_VALIDATION_BTTN_CLICK.connect(validator.validate_names)
