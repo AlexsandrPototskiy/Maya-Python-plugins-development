@@ -19,11 +19,11 @@ class MainWindow(QtWidgets.QDialog):
 	ON_VALIDATION_BTTN_CLICK = QtCore.Signal()
 	ON_RENAME_BTTN_CLICK = QtCore.Signal(str)
 
-	def __init__(self, window_parent = None):
+	def __init__(self, columns_names, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
-		self.__build_ui()
+		self.__build_ui(columns_names)
 
-	def __build_ui(self):
+	def __build_ui(self, columns_names):
 		#setting title
 		self.setWindowTitle("Asset Validator")
 		
@@ -35,8 +35,9 @@ class MainWindow(QtWidgets.QDialog):
 		self.__validate_bttn = QtWidgets.QPushButton("Validate")
 		self.__validate_bttn.clicked.connect(self.__validate_bttn_slot)
 		self.__log_table = QtWidgets.QTableWidget()
-		self.__log_table.setColumnCount(2)
-		self.__log_table.setHorizontalHeaderLabels(["Object Name", "Validation Status"])
+		
+		self.__log_table.setColumnCount(len(columns_names))
+		self.__log_table.setHorizontalHeaderLabels(columns_names)
 
 		validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
 		validation_layout.addWidget(self.__validate_bttn)
@@ -66,13 +67,24 @@ class MainWindow(QtWidgets.QDialog):
 	
 	# fill ui log with given ValidationLog
 	def fill_ui_validation_log(self, log):
+		data = {}
 		data = log.get_log_dict()
-		self.__log_table.setRowCount(len(data))	
+		
+		self.__log_table.setRowCount(len(data))
+		
 		row = 0
 		for itemKey in data:
+			# fill first row
 			self.__log_table.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
-			self.__log_table.setItem(row, 1, QtWidgets.QTableWidgetItem(data[itemKey]))
+			
+			statuses = data[itemKey]
+			self.__log_table.setColumnCount(len(statuses) + 1)
+			# fill other rows
+			for status in statuses:
+				self.__log_table.setItem(row, 1, QtWidgets.QTableWidgetItem(status.status_msg))
+			
 			row += 1
+			
 		self.__log_table.resizeRowsToContents()
 	
 
@@ -84,13 +96,17 @@ class ValidationLog():
 	
 	# adding log item
 	def add_log_item(self, key, value):
-		print("Adding Log: {0} -> {1}".format(key, value))
-		# TODO: add validation for exsiting keys
 		self.__current_log[key] = value
 	
 	# get all log data
 	def get_log_dict(self):
 		return self.__current_log
+
+
+class ValidationRuleStatus():
+	def __init__(self, status_msg, is_passed):
+		self.status_msg = status_msg
+		self.is_passed = is_passed
 
 
 # Core Tool Configuration provider
@@ -111,13 +127,22 @@ class ToolConfigurationProvider():
 class AssetValidator():
 	
 	def __init__(self, configuration_getter):
-		self.__output_listners = {}
+		
 		self.__configuration_getter = configuration_getter
+		self.__configuration = self.__read_config_file()		
+		
+		self.__output_listners = {}
+		
+		# setup validation rules
+		self.__rules = []
+		self.__rules.append(NameRule(self.__configuration))
+	
+	
+	def get_rules(self):
+		return self.__rules
 
-	def validate_names(self):
-		# reading configuration 
-		configuration = self.__read_config_file()
-			
+
+	def do_validation(self):
 		# get current scene objects
 		current_scene_objects = cmds.ls(geometry=True)
 		
@@ -132,7 +157,7 @@ class AssetValidator():
 			filtred_objects.append(scene_object.replace(shape_suffix, ''))
 		
 		# validating
-		validation_data = self.__validate(filtred_objects, configuration)
+		validation_data = self.__validate(filtred_objects, self.__configuration)
 		self.__notify_listners(validation_data)
 	
 	# read external configuration file
@@ -143,15 +168,12 @@ class AssetValidator():
 	def __validate(self, scene_objects, configuration):
 		
 		data = ValidationLog()
-		
-		for c in configuration:
-			# adding to log objects that was not fount in scene
-			if c not in scene_objects:
-				validation_status = "Missing"
-			else:
-				validation_status = "OK!"
-			
-			data.add_log_item(c, validation_status)
+		# apply rules for each scene object
+		for s in scene_objects:
+			for rule in self.__rules:
+				statuses = []
+				statuses.append(rule.apply_rule(s))
+				data.add_log_item(s, statuses)
 				
 		return data
 	
@@ -165,6 +187,36 @@ class AssetValidator():
 		listener_id = id(listener)
 		print("Adding Listner with ID: {0}".format(listener_id))
 		self.__output_listners[listener_id] = listener
+
+
+# base validation rule		
+class ValidationRule():
+	NAME = "Abstract Rule"
+	def apply_rule(self, object_for_validation):
+		pass
+
+
+# names validation
+class NameRule(ValidationRule):
+	
+	def __init__(self, names_from_configuration):
+		self.NAME = "Name Status"
+		self.__names = names_from_configuration
+		
+	def apply_rule(self, object_name):
+		
+		satus_mgs = ""
+		is_passed = False
+		
+		if object_name not in self.__names:
+			satus_mgs = "Wrong Name"
+			is_passed = False
+		
+		satus_mgs = "OK!"
+		is_passed = True
+		
+		status = ValidationRuleStatus(satus_mgs, is_passed)
+		return status
 
 
 # Core ReNaming Logic
@@ -181,10 +233,9 @@ def rename_by_name(new_name):
 		cmds.rename(selected_object, new_name)
 
 
+
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
-	# crating window instance with Maya Window as Parent
-	w = MainWindow(get_main_window())
 	
 	# main configuration
 	configuration_provider = ToolConfigurationProvider()
@@ -192,11 +243,19 @@ if __name__ == "__main__":
 	
 	validator = AssetValidator(configuration_provider.get_configuration)
 	
+	# construct columns
+	columns = ["Object Name"]
+	for r in validator.get_rules():
+		columns.append(r.NAME)
+		
+	# crating window instance with Maya Window as Parent
+	window = MainWindow(columns, get_main_window())
+		
 	# connection ui inputs and validation logic
-	w.ON_VALIDATION_BTTN_CLICK.connect(validator.validate_names)
-	w.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
+	window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
+	window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
 	
-	validator.add_listener(w.fill_ui_validation_log)
+	validator.add_listener(window.fill_ui_validation_log)
 	
 	# starting tool
-	w.show()
+	window.show()
