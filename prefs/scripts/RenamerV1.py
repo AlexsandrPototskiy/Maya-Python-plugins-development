@@ -67,17 +67,13 @@ class MainWindow(QtWidgets.QDialog):
 	# fill ui log with given ValidationLog
 	def fill_ui_validation_log(self, log):
 		data = log.get_log_dict()
-		
 		self.__log_table.setRowCount(len(data))	
-		
 		row = 0
 		for itemKey in data:
 			self.__log_table.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
 			self.__log_table.setItem(row, 1, QtWidgets.QTableWidgetItem(data[itemKey]))
 			row += 1
-		
 		self.__log_table.resizeRowsToContents()
-
 	
 
 # Core Data Classes
@@ -137,7 +133,6 @@ class AssetValidator():
 		
 		# validating
 		validation_data = self.__validate(filtred_objects, configuration)
-		
 		self.__notify_listners(validation_data)
 	
 	# read external configuration file
@@ -186,7 +181,7 @@ def rename_by_name(new_name):
 		cmds.rename(selected_object, new_name)
 
 
-# Connect UI with logical part and run Tool
+# Connect UI with logical part and Run Tool
 if __name__ == "__main__":
 	# crating window instance with Maya Window as Parent
 	w = MainWindow(get_main_window())
