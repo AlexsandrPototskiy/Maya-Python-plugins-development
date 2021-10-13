@@ -12,6 +12,7 @@ def get_main_window():
 	main = omui.MQtUtil.mainWindow()
 	return wrapInstance(long(main), QtWidgets.QWidget)
 
+
 # UI
 class MainWindow(QtWidgets.QDialog):
 	
@@ -56,7 +57,7 @@ class MainWindow(QtWidgets.QDialog):
 		
 		# adding to main grp
 		app_layout.addLayout(renamer_layout)
-		
+
 	def __validate_bttn_slot(self):
 		self.ON_VALIDATION_BTTN_CLICK.emit()
 	
@@ -116,7 +117,7 @@ class AssetValidator():
 	def __init__(self, configuration_getter):
 		self.__output_listners = {}
 		self.__configuration_getter = configuration_getter
-		
+
 	def validate_names(self):
 		# reading configuration 
 		configuration = self.__read_config_file()
@@ -138,12 +139,11 @@ class AssetValidator():
 		validation_data = self.__validate(filtred_objects, configuration)
 		
 		self.__notify_listners(validation_data)
-		
 	
 	# read external configuration file
 	def __read_config_file(self):
 		return self.__configuration_getter()
-		
+
 	# validate given object base on configuration
 	def __validate(self, scene_objects, configuration):
 		
@@ -153,7 +153,10 @@ class AssetValidator():
 			# adding to log objects that was not fount in scene
 			if c not in scene_objects:
 				validation_status = "Missing"
-				data.add_log_item(c, validation_status)
+			else:
+				validation_status = "OK!"
+			
+			data.add_log_item(c, validation_status)
 				
 		return data
 	
@@ -167,14 +170,20 @@ class AssetValidator():
 		listener_id = id(listener)
 		print("Adding Listner with ID: {0}".format(listener_id))
 		self.__output_listners[listener_id] = listener
-		
-	
+
 
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
-	print("{0} -> {1}".format("current_test_name", new_name))
-
+	current_selected_list = cmds.ls(selection=True)
+	
+	if len(current_selected_list) < 1:
+		print("No Selection, please select at least one object to rename")
+		return
+	
+	for selected_object in current_selected_list:
+		print("{0} -> {1}".format("current_test_name", new_name))
+		cmds.rename(selected_object, new_name)
 
 
 # Connect UI with logical part and run Tool
