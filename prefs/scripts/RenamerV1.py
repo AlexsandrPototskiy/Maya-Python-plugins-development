@@ -21,6 +21,7 @@ class MainWindow(QtWidgets.QDialog):
 
 	def __init__(self, columns_names, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
+		self.setWindowFlags(QtCore.Qt.Tool)
 		self.__build_ui(columns_names)
 
 	def __build_ui(self, columns_names):
