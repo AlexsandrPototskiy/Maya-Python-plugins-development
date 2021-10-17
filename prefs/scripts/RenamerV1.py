@@ -204,19 +204,10 @@ class NameRule(ValidationRule):
 		self.__names = names_from_configuration
 		
 	def apply_rule(self, object_name):
-		
-		satus_mgs = ""
-		is_passed = False
-		
 		if object_name not in self.__names:
-			satus_mgs = "Wrong Name"
-			is_passed = False
-		
-		satus_mgs = "OK!"
-		is_passed = True
-		
-		status = ValidationRuleStatus(satus_mgs, is_passed)
-		return status
+			return ValidationRuleStatus("Wrong Name", False)
+			
+		return ValidationRuleStatus("Ok", True)
 
 
 # Core ReNaming Logic
@@ -259,3 +250,4 @@ if __name__ == "__main__":
 	
 	# starting tool
 	window.show()
+
