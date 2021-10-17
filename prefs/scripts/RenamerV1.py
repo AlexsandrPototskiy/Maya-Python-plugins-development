@@ -1,4 +1,4 @@
-import maya.cmds as cmds
+import pymel.core as pm
 
 # Main QT imports
 from shiboken2 import wrapInstance
@@ -144,7 +144,7 @@ class AssetValidator():
 
 	def do_validation(self):
 		# get current scene objects
-		current_scene_objects = cmds.ls(geometry=True)
+		current_scene_objects = pm.ls(geometry=True)
 		
 		# shape_suffix to remove from shape node
 		shape_suffix = "Shape"
@@ -206,14 +206,15 @@ class NameRule(ValidationRule):
 	def apply_rule(self, object_name):
 		if object_name not in self.__names:
 			return ValidationRuleStatus("Wrong Name", False)
-			
+
 		return ValidationRuleStatus("Ok", True)
 
 
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
-	current_selected_list = cmds.ls(selection=True)
+	
+	current_selected_list = pm.ls(selection=True)
 	
 	if len(current_selected_list) < 1:
 		print("No Selection, please select at least one object to rename")
@@ -221,7 +222,7 @@ def rename_by_name(new_name):
 	
 	for selected_object in current_selected_list:
 		print("{0} -> {1}".format("current_test_name", new_name))
-		cmds.rename(selected_object, new_name)
+		pm.rename(selected_object, new_name)
 
 
 
