@@ -10,16 +10,13 @@ You can implement your own ValidationRule and apply 'special case' to object.
 All you have to do is to inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
 See NameRule or UVSetRule as example.
 """
-
 # pyMel imports
 import pymel.core as pm
-from AssetValidationRules import *
 
 # Main QT imports
 from shiboken2 import wrapInstance
 from PySide2 import QtCore, QtWidgets
 import maya.OpenMayaUI as omui
-
 
 # Core UI Implementation
 # Get instance of Maya main window via  wrapInstance and Maya API
@@ -90,15 +87,18 @@ class MainWindow(QtWidgets.QDialog):
 		
 		row = 0
 		for itemKey in data:
-			# fill first row
+
+			# fill first column with object name
 			self.__log_table.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
-			
+		
+			# fill status columns
+			column = 1
 			statuses = data[itemKey]
-			self.__log_table.setColumnCount(len(statuses) + 1)
-			# fill other rows
 			for status in statuses:
-				self.__log_table.setItem(row, 1, QtWidgets.QTableWidgetItem(status.status_msg))
+				self.__log_table.setItem(row, column, QtWidgets.QTableWidgetItem(status.status_msg))
+				column += 1
 			
+			# go to next row
 			row += 1
 			
 		self.__log_table.resizeRowsToContents()
@@ -144,12 +144,20 @@ class AssetValidator():
 		self.__configuration = self.__read_config_file()		
 		
 		self.__output_listners = {}
-		
-		# setup validation rules
-		self.__rules = []
+		self.__register_rules()
 
+
+	# TODO: think how to register different rules in validator
+	def __register_rules(self):
+		self.__rules = []
+		# create rules
 		names_rule = NameRule(self.__configuration)
+		uvSet_rule = UVSetRule("")
+
+		# add rules to rules list
 		self.__rules.append(names_rule)
+		self.__rules.append(uvSet_rule)
+	
 	
 	def get_rules(self):
 		return self.__rules
@@ -182,8 +190,8 @@ class AssetValidator():
 		data = ValidationLog()
 		# apply rules for each scene object
 		for s in scene_objects:
+			statuses = []
 			for rule in self.__rules:
-				statuses = []
 				statuses.append(rule.apply_rule(s))
 				data.add_log_item(s, statuses)
 				
@@ -201,6 +209,41 @@ class AssetValidator():
 		self.__output_listners[listener_id] = listener
 
 
+# Validation Status Data Class
+# it tells what current status, is test passed and etc.
+class ValidationRuleStatus():
+	def __init__(self, status_msg, is_passed):
+		self.status_msg = status_msg
+		self.is_passed = is_passed
+
+# Names Validation Rule
+class NameRule():
+	def __init__(self, config):
+		self.NAME = "Name Status"
+		self.set_configuration(config)
+	
+	def set_configuration(self, config):
+		self.__names = config
+		
+	def apply_rule(self, object_name):
+		if object_name not in self.__names:
+			return ValidationRuleStatus("Wrong Name", False)
+		return ValidationRuleStatus("Ok", True)
+
+# UV Set Validation Rules
+class UVSetRule():
+	def __init__(self, config):
+		self.NAME = "UVSets Status"
+		self.set_configuration(config)
+	
+	def set_configuration(self, config):
+		self.__settings = config
+	
+	def apply_rule(self, maya_object):
+		return ValidationRuleStatus("To Much UV Sets", False)
+
+
+
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
@@ -216,16 +259,14 @@ def rename_by_name(new_name):
 		pm.rename(selected_object, new_name)
 
 
-
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
-
-	# reload(AssetValidationRules)
 
 	# main configuration
 	configuration_provider = ToolConfigurationProvider()
 	configuration_provider.reload()
 	
+	# main validator class
 	validator = AssetValidator(configuration_provider.get_configuration)
 	
 	# construct columns for UI
