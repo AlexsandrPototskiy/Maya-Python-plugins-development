@@ -10,9 +10,8 @@ You can implement your own ValidationRule and apply 'special case' to object.
 All you have to do is to inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
 See NameRule or UVSetRule as example.
 """
-# pyMel imports
+
 import pymel.core as pm
-import ValidationRules
 
 # Main QT imports
 from shiboken2 import wrapInstance
@@ -131,7 +130,6 @@ class MainWindow(QtWidgets.QDialog):
 
 # Settings UI
 class SettingsWindow(QtWidgets.QDialog):
-
 	def __init__(self, window_parent):
 		super(SettingsWindow, self).__init__(window_parent)
 		self.setWindowFlags(QtCore.Qt.Tool)
@@ -218,6 +216,50 @@ class AssetValidator():
 		self.__output_listners[listener_id] = listener
 
 
+# Main register function for validation logic
+def get_validation_rules(configuration):
+    print("[Validation Rules] Registering Rules")
+    rules = []
+    rules.append(NameRule(configuration))
+    rules.append(UVSetRule(configuration))
+    return rules
+
+
+# Validation Status Data Class
+# it tells what current status, is test passed and etc.
+class ValidationRuleStatus():
+	def __init__(self, status_msg, is_passed):
+		self.status_msg = status_msg
+		self.is_passed = is_passed
+
+# Names Validation Rule
+class NameRule():
+	def __init__(self, config):
+		self.NAME = "Name Status"
+		self.set_configuration(config)
+	
+	def set_configuration(self, config):
+		self.__names = config
+		
+	def apply_rule(self, object_name):
+		if object_name not in self.__names:
+			return ValidationRuleStatus("Wrong Name", False)
+		return ValidationRuleStatus("Ok", True)
+
+# UV Set Validation Rules
+class UVSetRule():
+	def __init__(self, config):
+		self.NAME = "UVSets Status"
+		self.set_configuration(config)
+	
+	def set_configuration(self, config):
+		self.__settings = config
+	
+	def apply_rule(self, scene_geo):
+		object_uv_data = pm.polyUVSet(scene_geo)
+		st = ValidationRuleStatus("To Much UV Sets {0}".format(object_uv_data), False)
+	    return st
+
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
@@ -249,15 +291,12 @@ def get_columns(rules):
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
 
-	#TODO: delete it from Production code
-	reload(ValidationRules)
-
 	# main configuration
 	configuration_provider = ToolConfigurationProvider()
 	configuration_provider.reload()
 	
 	configuration = configuration_provider.get_configuration()
-	rules = ValidationRules.get_validation_rules(configuration)
+	rules = get_validation_rules(configuration)
 
 	# main validator controller class
 	validator = AssetValidator(rules)
