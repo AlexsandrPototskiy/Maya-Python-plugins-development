@@ -1,3 +1,17 @@
+"""
+Asset Validation tool
+Made By Alex Pototskyi
+
+Tool was inpired by multiple issues that I strogle when was working as Techical Artist,
+each time with new project we was needed to create anouther tool that will help to fix project needs with names, pivots, uv sets and etc.
+
+Tool was designed as Flexible and Reusable, everyone who wants to improve it can do that.
+You can implement your own ValidationRule and apply 'special case' to object.
+All you have to do is to Inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
+ See NameRule or UVSetRule as example.
+"""
+
+# pyMel imports
 import pymel.core as pm
 
 # Main QT imports
@@ -103,7 +117,8 @@ class ValidationLog():
 	def get_log_dict(self):
 		return self.__current_log
 
-
+# Validation Status Data Class
+# it tells what current status, is test passed and etc.
 class ValidationRuleStatus():
 	def __init__(self, status_msg, is_passed):
 		self.status_msg = status_msg
@@ -111,6 +126,7 @@ class ValidationRuleStatus():
 
 
 # Core Tool Configuration provider
+# Loading and Storing tool settings
 class ToolConfigurationProvider():
 	def __init__(self):
 		self.__cached_configuration = []
@@ -125,6 +141,7 @@ class ToolConfigurationProvider():
 
 
 # Core validation logic
+# Validate given assets with different validation rules
 class AssetValidator():
 	
 	def __init__(self, configuration_getter):
@@ -138,10 +155,8 @@ class AssetValidator():
 		self.__rules = []
 		self.__rules.append(NameRule(self.__configuration))
 	
-	
 	def get_rules(self):
 		return self.__rules
-
 
 	def do_validation(self):
 		# get current scene objects
@@ -236,7 +251,9 @@ if __name__ == "__main__":
 	
 	validator = AssetValidator(configuration_provider.get_configuration)
 	
-	# construct columns
+	# construct columns for UI
+	# TODO: move this part to configuration file
+	# user must select what he dont want to validate
 	columns = ["Object Name"]
 	for r in validator.get_rules():
 		columns.append(r.NAME)
@@ -252,4 +269,3 @@ if __name__ == "__main__":
 	
 	# starting tool
 	window.show()
-
