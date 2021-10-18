@@ -7,12 +7,13 @@ each time with new project we was needed to create anouther tool that will help 
 
 Tool was designed as Flexible and Reusable, everyone who wants to improve it can do that.
 You can implement your own ValidationRule and apply 'special case' to object.
-All you have to do is to Inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
- See NameRule or UVSetRule as example.
+All you have to do is to inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
+See NameRule or UVSetRule as example.
 """
 
 # pyMel imports
 import pymel.core as pm
+from AssetValidationRules import *
 
 # Main QT imports
 from shiboken2 import wrapInstance
@@ -117,13 +118,6 @@ class ValidationLog():
 	def get_log_dict(self):
 		return self.__current_log
 
-# Validation Status Data Class
-# it tells what current status, is test passed and etc.
-class ValidationRuleStatus():
-	def __init__(self, status_msg, is_passed):
-		self.status_msg = status_msg
-		self.is_passed = is_passed
-
 
 # Core Tool Configuration provider
 # Loading and Storing tool settings
@@ -153,7 +147,9 @@ class AssetValidator():
 		
 		# setup validation rules
 		self.__rules = []
-		self.__rules.append(NameRule(self.__configuration))
+
+		names_rule = NameRule(self.__configuration)
+		self.__rules.append(names_rule)
 	
 	def get_rules(self):
 		return self.__rules
@@ -205,27 +201,6 @@ class AssetValidator():
 		self.__output_listners[listener_id] = listener
 
 
-# base validation rule		
-class ValidationRule():
-	NAME = "Abstract Rule"
-	def apply_rule(self, object_for_validation):
-		pass
-
-
-# names validation
-class NameRule(ValidationRule):
-	
-	def __init__(self, names_from_configuration):
-		self.NAME = "Name Status"
-		self.__names = names_from_configuration
-		
-	def apply_rule(self, object_name):
-		if object_name not in self.__names:
-			return ValidationRuleStatus("Wrong Name", False)
-
-		return ValidationRuleStatus("Ok", True)
-
-
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
@@ -244,7 +219,9 @@ def rename_by_name(new_name):
 
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
-	
+
+	# reload(AssetValidationRules)
+
 	# main configuration
 	configuration_provider = ToolConfigurationProvider()
 	configuration_provider.reload()
