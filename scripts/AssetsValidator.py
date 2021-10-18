@@ -12,6 +12,7 @@ See NameRule or UVSetRule as example.
 """
 # pyMel imports
 import pymel.core as pm
+import ValidationRules
 
 # Main QT imports
 from shiboken2 import wrapInstance
@@ -170,29 +171,9 @@ class ToolConfigurationProvider():
 # Validate given assets with different validation rules
 class AssetValidator():
 	
-	def __init__(self, configuration_getter):
-		
-		self.__configuration_getter = configuration_getter
-		self.__configuration = self.__read_config_file()		
-		
+	def __init__(self, rules):
 		self.__output_listners = {}
-		self.__register_rules()
-
-
-	# TODO: think how to register different rules in validator
-	def __register_rules(self):
-		self.__rules = []
-		# create rules
-		names_rule = NameRule(self.__configuration)
-		uvSet_rule = UVSetRule("")
-
-		# add rules to rules list
-		self.__rules.append(names_rule)
-		self.__rules.append(uvSet_rule)
-	
-	
-	def get_rules(self):
-		return self.__rules
+		self.__rules = rules
 
 	def do_validation(self):
 		# get current scene objects
@@ -209,15 +190,11 @@ class AssetValidator():
 			filtred_objects.append(scene_object.replace(shape_suffix, ''))
 		
 		# validating
-		validation_data = self.__validate(filtred_objects, self.__configuration)
+		validation_data = self.__validate(filtred_objects)
 		self.__notify_listners(validation_data)
 	
-	# read external configuration file
-	def __read_config_file(self):
-		return self.__configuration_getter()
-
-	# validate given object base on configuration
-	def __validate(self, scene_objects, configuration):
+	# validate given object
+	def __validate(self, scene_objects):
 		
 		data = ValidationLog()
 		# apply rules for each scene object
@@ -241,50 +218,13 @@ class AssetValidator():
 		self.__output_listners[listener_id] = listener
 
 
-# Validation Status Data Class
-# it tells what current status, is test passed and etc.
-class ValidationRuleStatus():
-	def __init__(self, status_msg, is_passed):
-		self.status_msg = status_msg
-		self.is_passed = is_passed
-
-# Names Validation Rule
-class NameRule():
-	def __init__(self, config):
-		self.NAME = "Name Status"
-		self.set_configuration(config)
-	
-	def set_configuration(self, config):
-		self.__names = config
-		
-	def apply_rule(self, object_name):
-		if object_name not in self.__names:
-			return ValidationRuleStatus("Wrong Name", False)
-		return ValidationRuleStatus("Ok", True)
-
-# UV Set Validation Rules
-class UVSetRule():
-	def __init__(self, config):
-		self.NAME = "UVSets Status"
-		self.set_configuration(config)
-	
-	def set_configuration(self, config):
-		self.__settings = config
-	
-	def apply_rule(self, maya_object):
-		return ValidationRuleStatus("To Much UV Sets", False)
-
-
 # Core ReNaming Logic
 # Main entry point of Renamer
 def rename_by_name(new_name):
-	
 	current_selected_list = pm.ls(selection=True)
-	
 	if len(current_selected_list) < 1:
 		print("No Selection, please select at least one object to rename")
 		return
-	
 	for selected_object in current_selected_list:
 		print("{0} -> {1}".format("current_test_name", new_name))
 		pm.rename(selected_object, new_name)
@@ -294,31 +234,36 @@ def create_settings_window(setttings_parent):
 	ui = SettingsWindow(setttings_parent)
 	ui.show()
 
-
+# select object in scene
 def select_item(object_name):
 	print("Selecting {0}".format(object_name))
 	pm.select(object_name)
 
+# construct UI columns base on rules name
+def get_columns(rules):
+	columns = ["Object Name"]
+	for r in rules:
+		columns.append(r.NAME)
+	return columns
 
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
+
+	#TODO: delete it from Production code
+	reload(ValidationRules)
 
 	# main configuration
 	configuration_provider = ToolConfigurationProvider()
 	configuration_provider.reload()
 	
-	# main validator class
-	validator = AssetValidator(configuration_provider.get_configuration)
-	
-	# construct columns for UI
-	# TODO: move this part to configuration file
-	# user must select what he dont want to validate
-	columns = ["Object Name"]
-	for r in validator.get_rules():
-		columns.append(r.NAME)
+	configuration = configuration_provider.get_configuration()
+	rules = ValidationRules.get_validation_rules(configuration)
+
+	# main validator controller class
+	validator = AssetValidator(rules)
 		
 	# crating window instance with Maya Window as Parent
-	window = MainWindow(columns, get_main_window())
+	window = MainWindow(get_columns(rules), get_main_window())
 		
 	# connection ui inputs and validation logic
 	window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
