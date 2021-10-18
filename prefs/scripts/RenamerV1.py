@@ -108,7 +108,7 @@ class MainWindow(QtWidgets.QDialog):
 			name_item = QtWidgets.QTableWidgetItem(itemKey)
 			name_item.setFlags(QtCore.Qt.ItemIsSelectable)
 			name_item.setFlags(QtCore.Qt.ItemIsEnabled)
-			
+
 			self.__log_table.setItem(row, 0, name_item)
 		
 			# fill status columns
@@ -273,7 +273,6 @@ class UVSetRule():
 	
 	def apply_rule(self, maya_object):
 		return ValidationRuleStatus("To Much UV Sets", False)
-
 
 
 # Core ReNaming Logic
