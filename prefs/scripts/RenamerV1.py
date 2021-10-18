@@ -25,11 +25,13 @@ def get_main_window():
 	return wrapInstance(long(main), QtWidgets.QWidget)
 
 
-# UI
+# Main UI
 class MainWindow(QtWidgets.QDialog):
 	
 	ON_VALIDATION_BTTN_CLICK = QtCore.Signal()
 	ON_RENAME_BTTN_CLICK = QtCore.Signal(str)
+	ON_SELECT_ITEM_CLICK = QtCore.Signal(str)
+	ON_SETTINGS_BTTN_CLICK = QtCore.Signal(QtWidgets.QDialog)
 
 	def __init__(self, columns_names, window_parent = None):
 		super(MainWindow, self).__init__(window_parent)
@@ -42,22 +44,27 @@ class MainWindow(QtWidgets.QDialog):
 		
 		# main windoww grp
 		app_layout = QtWidgets.QVBoxLayout(self)
-		
+
+		# creating settings layout
+		settings_layout = QtWidgets.QVBoxLayout()
+		self.__settings_bttn = QtWidgets.QPushButton("Settings")
+		self.__settings_bttn.clicked.connect(self.__settings_bttn_slot)
+		settings_layout.addWidget(self.__settings_bttn)
+		app_layout.addLayout(settings_layout)
+
 		# creating validation layout
 		validation_layout = QtWidgets.QVBoxLayout()
 		self.__validate_bttn = QtWidgets.QPushButton("Validate")
 		self.__validate_bttn.clicked.connect(self.__validate_bttn_slot)
 		self.__log_table = QtWidgets.QTableWidget()
-		
 		self.__log_table.setColumnCount(len(columns_names))
 		self.__log_table.setHorizontalHeaderLabels(columns_names)
+		self.__log_table.clicked.connect(self.__on_item_clicked)
 
 		validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
 		validation_layout.addWidget(self.__validate_bttn)
 		validation_layout.addWidget(QtWidgets.QLabel("Status Log:"))
 		validation_layout.addWidget(self.__log_table)
-		
-		# adding to main grp
 		app_layout.addLayout(validation_layout)
 		
 		# creating renamer layout
@@ -68,8 +75,6 @@ class MainWindow(QtWidgets.QDialog):
 		self.__rename_btn.clicked.connect(self.__rename_bttn_slot)
 		renamer_layout.addWidget(self.__names_box)
 		renamer_layout.addWidget(self.__rename_btn)
-		
-		# adding to main grp
 		app_layout.addLayout(renamer_layout)
 
 	def __validate_bttn_slot(self):
@@ -77,6 +82,17 @@ class MainWindow(QtWidgets.QDialog):
 	
 	def __rename_bttn_slot(self):
 		self.ON_RENAME_BTTN_CLICK.emit("test_name_from_combo_box")
+
+	def __settings_bttn_slot(self):
+		self.ON_SETTINGS_BTTN_CLICK.emit(self)
+
+	def __on_item_clicked(self, item):
+
+		currentItem = self.__log_table.item(item.row(), 0)
+		data = currentItem.data(0)
+
+		print(data)
+		self.ON_SELECT_ITEM_CLICK.emit(data)
 	
 	# fill ui log with given ValidationLog
 	def fill_ui_validation_log(self, log):
@@ -102,6 +118,14 @@ class MainWindow(QtWidgets.QDialog):
 			row += 1
 			
 		self.__log_table.resizeRowsToContents()
+
+
+# Settings UI
+class SettingsWindow(QtWidgets.QDialog):
+
+	def __init__(self, window_parent):
+		super(SettingsWindow, self).__init__(window_parent)
+		self.setWindowFlags(QtCore.Qt.Tool)
 	
 
 # Core Data Classes
@@ -259,6 +283,16 @@ def rename_by_name(new_name):
 		pm.rename(selected_object, new_name)
 
 
+def create_settings_window(setttings_parent):
+	ui = SettingsWindow(setttings_parent)
+	ui.show()
+
+
+def select_item(object_name):
+	print("Selecting {0}".format(object_name))
+	pm.select(object_name)
+
+
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
 
@@ -282,7 +316,9 @@ if __name__ == "__main__":
 	# connection ui inputs and validation logic
 	window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
 	window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
-	
+	window.ON_SETTINGS_BTTN_CLICK.connect(create_settings_window)
+	window.ON_SELECT_ITEM_CLICK.connect(select_item)
+
 	validator.add_listener(window.fill_ui_validation_log)
 	
 	# starting tool
