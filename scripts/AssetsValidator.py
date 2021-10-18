@@ -257,7 +257,7 @@ class UVSetRule(object):
 	def apply_rule(self, scene_geo):
 		object_uv_data = pm.modeling.polyUVSet(scene_geo)
 		st = ValidationRuleStatus("To Much UV Sets {0}".format(object_uv_data), False)
-	    return st
+                return st
 
 # Core ReNaming Logic
 # Main entry point of Renamer
