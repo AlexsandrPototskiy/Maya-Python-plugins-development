@@ -224,7 +224,6 @@ def get_validation_rules(configuration):
     rules.append(UVSetRule(configuration))
     return rules
 
-
 # Validation Status Data Class
 # it tells what current status, is test passed and etc.
 class ValidationRuleStatus():
@@ -233,7 +232,7 @@ class ValidationRuleStatus():
 		self.is_passed = is_passed
 
 # Names Validation Rule
-class NameRule():
+class NameRule(object):
 	def __init__(self, config):
 		self.NAME = "Name Status"
 		self.set_configuration(config)
@@ -247,7 +246,7 @@ class NameRule():
 		return ValidationRuleStatus("Ok", True)
 
 # UV Set Validation Rules
-class UVSetRule():
+class UVSetRule(object):
 	def __init__(self, config):
 		self.NAME = "UVSets Status"
 		self.set_configuration(config)
@@ -256,7 +255,7 @@ class UVSetRule():
 		self.__settings = config
 	
 	def apply_rule(self, scene_geo):
-		object_uv_data = pm.polyUVSet(scene_geo)
+		object_uv_data = pm.modeling.polyUVSet(scene_geo)
 		st = ValidationRuleStatus("To Much UV Sets {0}".format(object_uv_data), False)
 	    return st
 
