@@ -105,13 +105,21 @@ class MainWindow(QtWidgets.QDialog):
 		for itemKey in data:
 
 			# fill first column with object name
-			self.__log_table.setItem(row, 0, QtWidgets.QTableWidgetItem(itemKey))
+			name_item = QtWidgets.QTableWidgetItem(itemKey)
+			name_item.setFlags(QtCore.Qt.ItemIsSelectable)
+			name_item.setFlags(QtCore.Qt.ItemIsEnabled)
+			
+			self.__log_table.setItem(row, 0, name_item)
 		
 			# fill status columns
 			column = 1
 			statuses = data[itemKey]
 			for status in statuses:
-				self.__log_table.setItem(row, column, QtWidgets.QTableWidgetItem(status.status_msg))
+
+				widget_item = QtWidgets.QTableWidgetItem(status.status_msg)
+				widget_item.setFlags(QtCore.Qt.ItemIsSelectable)
+
+				self.__log_table.setItem(row, column, widget_item)
 				column += 1
 			
 			# go to next row
