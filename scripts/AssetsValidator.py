@@ -302,9 +302,10 @@ def rename_by_name(new_name):
     if len(current_selected_list) < 1:
         print("No Selection, please select at least one object to rename")
         return
+        
     for selected_object in current_selected_list:
         print("{0} -> {1}".format("current_test_name", new_name))
-        pm.rename(selected_object, new_name)
+        selected_object.rename(new_name)
 
 
 def create_settings_window(setttings_parent):
