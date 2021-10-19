@@ -15,7 +15,7 @@ import pymel.core as pm
 
 # Main QT imports
 from shiboken2 import wrapInstance
-from PySide2 import QtCore, QtWidgets
+from PySide2 import QtCore, QtWidgets, QtGui
 import maya.OpenMayaUI as omui
 
 
@@ -107,7 +107,6 @@ class MainWindow(QtWidgets.QDialog):
 
             # fill first column with object name
             name_item = QtWidgets.QTableWidgetItem(itemKey)
-            # name_item.setFlags(QtCore.Qt.ItemIsSelectable)
             name_item.setFlags(QtCore.Qt.ItemIsEnabled)
 
             self.__log_table.setItem(row, 0, name_item)
@@ -118,7 +117,10 @@ class MainWindow(QtWidgets.QDialog):
             for status in statuses:
 
                 widget_item = QtWidgets.QTableWidgetItem(status.status_msg)
-                widget_item.setFlags(QtCore.Qt.ItemIsSelectable)
+                widget_item.setFlags(QtCore.Qt.ItemIsEnabled)
+
+                if status.is_passed == False:
+                    widget_item.setBackgroundColor(QtGui.QColor(128, 0 ,0))
 
                 self.__log_table.setItem(row, column, widget_item)
                 column += 1
