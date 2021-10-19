@@ -184,9 +184,17 @@ class AssetValidator():
         self.__rules = rules
 
     def do_validation(self):
-        # get current scene objects
-        current_scene_objects = pm.ls(transforms=True)
 
+        # check if any objects selected
+        current_scene_objects = pm.selected()
+
+        if len(current_scene_objects) < 1:
+            # get current scene objects
+            current_scene_objects = pm.ls(transforms=True)
+
+        if len(current_scene_objects) < 1:
+            print("No Objects in Scene")
+        
         ignorable_types = ["camera"]
 
         filtred_objects = []
