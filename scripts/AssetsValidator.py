@@ -160,25 +160,50 @@ class ValidationLog():
 # Loading and Storing tool settings
 class ToolConfigurationProvider():
     def __init__(self):
-        self.__cached_configuration = []
+        self.__rules_configuration = RuleConfiguration()
         self.__filters = []
     
     def reload(self):
-        # TODO: read data from file
-        self.__cached_configuration = [
+
+        # TODO: read data from .json file
+        self.__rules_configuration.set_name_configuration([
         "Intern",
         "Break",
         "Tire_FR",
-        "Bumper_L"
-        ]
+        "Bumper_L", 
+        "Door_L",
+        "Door_R"
+        ])
+
+        self.__rules_configuration.set_uv_sets_configuration(["UVChannel_1", "UVChannel_2"])
 
         self.__filters = ["camera"]
     
     def get_rules_configuration(self):
-        return self.__cached_configuration
+        return self.__rules_configuration
 
     def get_filters(self):
         return self.__filters
+
+
+# Rules Configuration Data Class
+class RuleConfiguration():
+    def __init__(self):
+        self.__names = []
+        self.__uvs = []
+
+    def set_name_configuration(self, names):
+        self.__names = names
+
+    def set_uv_sets_configuration(self, uv_sets):
+        self.__uvs = uv_sets
+
+    def get_names_configuration(self):
+        return self.__names
+
+    def get_uv_configuration(self):
+        return self.__uvs
+
 
 
 # Core validation logic
@@ -202,20 +227,19 @@ class AssetValidator():
             # get current scene objects
             current_scene_objects = pm.ls(transforms=True)
 
-        if len(current_scene_objects) < 1:
-            print("No Objects in Scene")
-
-
         filtred_objects = []
 
         # filtering maya scene objects
         for scene_object in current_scene_objects:
             first_relative = pm.listRelatives(scene_object, ad = True)[0]
-            if pm.nodeType(first_relative, q=True) not in self.__ignorable_types:
+            if first_relative.nodeType() not in self.__ignorable_types:
                 filtred_objects.append(scene_object)
+        
+        # do not validate anything if no objects is filtered
+        if len(filtred_objects) < 1:
+            print("No Objects in Scene")
+            return
 
-                
-        print(filtred_objects)
         # validating
         validation_data = self.__validate(filtred_objects)
         self.__notify_listners(validation_data)
@@ -249,8 +273,8 @@ class AssetValidator():
 def get_validation_rules(configuration):
     print("[Validation Rules] Registering Rules")
     rules = []
-    rules.append(NameRule(configuration))
-    rules.append(UVSetRule(configuration))
+    rules.append(NameRule(configuration.get_names_configuration()))
+    rules.append(UVSetRule(configuration.get_uv_configuration()))
     return rules
 
 
@@ -291,25 +315,20 @@ class UVSetRule(object):
 
         all_relatives = pm.listRelatives(scene_object)
         shape = all_relatives[0]
-        if pm.nodeType(shape, q = True) != "mesh":
+        if shape.nodeType() != "mesh":
             print("Not Mesh: {0}".format(scene_object.name()))
             return ValidationRuleStatus("Not Mesh", True)
             
         object_uv_data = pm.polyUVSet(shape, query=True, allUVSets = True)
 
-        #TODO: take this variables from settings
-        uv_name = "UVChannel_"
-        uv_sets_max_amount = 2
-        starts_from = 1
-
-        if len(object_uv_data) > uv_sets_max_amount:
-            return ValidationRuleStatus("To Much UV Sets {0}".format(len(object_uv_data)), False)
+        if len(object_uv_data) > len(self.__settings):
+            return ValidationRuleStatus("To Much UV Sets: {0}".format(len(object_uv_data)), False)
         
-        count = starts_from
+        count = 0
         for uv_set in object_uv_data:
-            tmp_name = uv_name + str(count)
-            if uv_set != tmp_name:
-                return ValidationRuleStatus("UV Set: {0} dont Match Settings Rule {1}".format(uv_set, tmp_name),False)
+            uv_name = self.__settings[count]
+            if uv_set != uv_name:
+                return ValidationRuleStatus('"{0}" not matching "{1}"'.format(uv_set, uv_name),False)
             count += 1
 
         return ValidationRuleStatus("Ok", True)
