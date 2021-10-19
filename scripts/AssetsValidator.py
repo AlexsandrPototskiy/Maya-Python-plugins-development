@@ -161,6 +161,7 @@ class ValidationLog():
 class ToolConfigurationProvider():
     def __init__(self):
         self.__cached_configuration = []
+        self.__filters = []
     
     def reload(self):
         # TODO: read data from file
@@ -168,11 +169,16 @@ class ToolConfigurationProvider():
         "Intern",
         "Break",
         "Tire_FR",
-        "Bumper_L"]
+        "Bumper_L"
+        ]
+
+        self.__filters = ["camera"]
     
-    # get cached configuration
-    def get_configuration(self):
+    def get_rules_configuration(self):
         return self.__cached_configuration
+
+    def get_filters(self):
+        return self.__filters
 
 
 # Core validation logic
@@ -182,6 +188,10 @@ class AssetValidator():
     def __init__(self, rules):
         self.__output_listners = {}
         self.__rules = rules
+        self.__ignorable_types = []
+
+    def set_filter(self, ignorable_types):
+        self.__ignorable_types = ignorable_types
 
     def do_validation(self):
 
@@ -194,16 +204,16 @@ class AssetValidator():
 
         if len(current_scene_objects) < 1:
             print("No Objects in Scene")
-        
-        ignorable_types = ["camera"]
+
 
         filtred_objects = []
 
         # filtering maya scene objects
         for scene_object in current_scene_objects:
             first_relative = pm.listRelatives(scene_object, ad = True)[0]
-            if pm.nodeType(first_relative, q=True) not in ignorable_types:
+            if pm.nodeType(first_relative, q=True) not in self.__ignorable_types:
                 filtred_objects.append(scene_object)
+
                 
         print(filtred_objects)
         # validating
@@ -344,12 +354,14 @@ if __name__ == "__main__":
     configuration_provider = ToolConfigurationProvider()
     configuration_provider.reload()
     
-    configuration = configuration_provider.get_configuration()
-    rules = get_validation_rules(configuration)
+    rules_configuration = configuration_provider.get_rules_configuration()
+    rules = get_validation_rules(rules_configuration)
 
     # main validator controller class
     validator = AssetValidator(rules)
-        
+    filters = configuration_provider.get_filters()
+    validator.set_filter(filters)
+
     # crating window instance with Maya Window as Parent
     window = MainWindow(get_columns(rules), get_main_window())
 
