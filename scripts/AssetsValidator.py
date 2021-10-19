@@ -107,7 +107,7 @@ class MainWindow(QtWidgets.QDialog):
 
             # fill first column with object name
             name_item = QtWidgets.QTableWidgetItem(itemKey)
-            name_item.setFlags(QtCore.Qt.ItemIsSelectable)
+            # name_item.setFlags(QtCore.Qt.ItemIsSelectable)
             name_item.setFlags(QtCore.Qt.ItemIsEnabled)
 
             self.__log_table.setItem(row, 0, name_item)
@@ -183,18 +183,19 @@ class AssetValidator():
 
     def do_validation(self):
         # get current scene objects
-        current_scene_objects = pm.ls(geometry=True)
-        
-        # shape_suffix to remove from shape node
-        shape_suffix = "Shape"
-        
-        # current geometry list
+        current_scene_objects = pm.ls(transforms=True)
+
+        ignorable_types = ["camera"]
+
         filtred_objects = []
-        
-        # removing suffix
+
+        # filtering maya scene objects
         for scene_object in current_scene_objects:
-            filtred_objects.append(scene_object.replace(shape_suffix, ''))
-        
+            first_relative = pm.listRelatives(scene_object, ad = True)[0]
+            if pm.nodeType(first_relative, q=True) not in ignorable_types:
+                filtred_objects.append(scene_object)
+                
+        print(filtred_objects)
         # validating
         validation_data = self.__validate(filtred_objects)
         self.__notify_listners(validation_data)
@@ -208,7 +209,7 @@ class AssetValidator():
             statuses = []
             for rule in self.__rules:
                 statuses.append(rule.apply_rule(s))
-                data.add_log_item(s, statuses)
+                data.add_log_item(s.name(), statuses)
                 
         return data
     
@@ -251,8 +252,8 @@ class NameRule(object):
     def set_configuration(self, config):
         self.__names = config
         
-    def apply_rule(self, object_name):
-        if object_name not in self.__names:
+    def apply_rule(self, scene_object):
+        if scene_object.name() not in self.__names:
             return ValidationRuleStatus("Wrong Name", False)
         return ValidationRuleStatus("Ok", True)
 
@@ -266,10 +267,15 @@ class UVSetRule(object):
     def set_configuration(self, config):
         self.__settings = config
     
-    def apply_rule(self, scene_geo):
+    def apply_rule(self, scene_object):
 
-        #TODO: validate object type for case if its not geometry
-        object_uv_data = pm.polyUVSet(scene_geo, query=True, allUVSets = True)
+        all_relatives = pm.listRelatives(scene_object)
+        shape = all_relatives[0]
+        if pm.nodeType(shape, q = True) != "mesh":
+            print("Not Mesh: {0}".format(scene_object.name()))
+            return ValidationRuleStatus("Not Mesh", True)
+            
+        object_uv_data = pm.polyUVSet(shape, query=True, allUVSets = True)
 
         #TODO: take this variables from settings
         uv_name = "UVChannel_"
