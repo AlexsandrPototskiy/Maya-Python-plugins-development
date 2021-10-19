@@ -14,12 +14,12 @@ global proc shelf_Custom () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "import maya.cmds as cmds\n\ncmds.commandPort(name = \":20180\", sourceType = \"mel\")\ncmds.commandPort(name = \":20181\", sourceType = \"python\")" 
+        -annotation "# Close ports if they were already open under another configuration\ntry:\n    cmds.commandPort(name=\":7001\", close=True)\nexcept:\n    cmds.warning('Could not close port 7001 (maybe it is not opened yet...)')\ntry:\n    cmds.commandPort(name=\":7002\", close=True)\nexcept:\n    cmds.warning('Could not close port 7002 (maybe it is not opened yet...)')" 
         -enableBackground 0
         -backgroundColor 0 0 0 
         -highlightColor 0.321569 0.521569 0.65098 
         -align "center" 
-        -label "import maya.cmds as cmds\n\ncmds.commandPort(name = \":20180\", sour..." 
+        -label "# Close ports if they were already open under another configurat..." 
         -labelOffset 0
         -rotation 0
         -flipX 0
@@ -33,7 +33,7 @@ global proc shelf_Custom () {
         -style "iconOnly" 
         -marginWidth 1
         -marginHeight 1
-        -command "import maya.cmds as cmds\n\ncmds.commandPort(name = \":20180\", sourceType = \"mel\")\ncmds.commandPort(name = \":20181\", sourceType = \"python\")" 
+        -command "# Close ports if they were already open under another configuration\ntry:\n    cmds.commandPort(name=\":7001\", close=True)\nexcept:\n    cmds.warning('Could not close port 7001 (maybe it is not opened yet...)')\ntry:\n    cmds.commandPort(name=\":7002\", close=True)\nexcept:\n    cmds.warning('Could not close port 7002 (maybe it is not opened yet...)')" 
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

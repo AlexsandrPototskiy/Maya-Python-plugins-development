@@ -1,0 +1,17 @@
+{
+  "folders":
+  [
+    {
+      "path": "."
+    }
+  ],
+  "settings":
+  {
+    "python_interpreter_path": "D:/APP/Autodesk/Maya2019/bin/mayapy.exe",
+    
+    "python_package_paths":
+    [
+      "D:/APP/Autodesk/Maya2019/devkit/other/pymel/extras/completion/py"
+    ]
+  }
+}
