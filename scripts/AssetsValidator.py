@@ -9,6 +9,7 @@ Tool was designed as Flexible and Reusable, everyone who wants to improve it can
 You can implement your own ValidationRule and apply 'special case' to object.
 All you have to do is to inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
 See NameRule or UVSetRule as example.
+Each Rule takes own data type NameRule takes list with names from data file, UVSetRule takes list of UV Set names etc.
 """
 import pymel.core as pm
 
