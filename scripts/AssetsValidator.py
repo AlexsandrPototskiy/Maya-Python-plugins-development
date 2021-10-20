@@ -144,14 +144,14 @@ class SettingsWindow(QtWidgets.QDialog):
         self.setWindowTitle("Settings")
         self.setWindowFlags(QtCore.Qt.Tool)
 
-        self.__names_txt = QtWidgets.QPlainTextEdit("Intern, Break, Tire_FR, Bumper_L, Door_L, Door_R")
-        self.__filters_txt = QtWidgets.QPlainTextEdit("camera, locator")
-        self.__save_bttn = QtWidgets.QPushButton("Save")
+        self.names_txt = QtWidgets.QPlainTextEdit("Intern, Break, Tire_FR, Bumper_L, Door_L, Door_R")
+        self.filters_txt = QtWidgets.QPlainTextEdit("camera, locator")
+        self.save_bttn = QtWidgets.QPushButton("Save")
 
         vlayout = QtWidgets.QVBoxLayout(self)
-        vlayout.addWidget(self.__names_txt)
-        vlayout.addWidget(self.__filters_txt)
-        vlayout.addWidget(self.__save_bttn)
+        vlayout.addWidget(self.names_txt)
+        vlayout.addWidget(self.filters_txt)
+        vlayout.addWidget(self.save_bttn)
     
 
 # Core Data Classes
@@ -370,7 +370,7 @@ def get_columns(rules):
 class AssetValidatorTool():
 
     def __init__(self):
-        
+
         configuration_provider = ToolConfigurationProvider()
         configuration_provider.reload()
         
@@ -392,15 +392,20 @@ class AssetValidatorTool():
         # connection ui inputs and validation logic
         window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
         window.ON_RENAME_BTTN_CLICK.connect(self.__rename)
-        window.ON_SETTINGS_BTTN_CLICK.connect(show_settings_window)
+        window.ON_SETTINGS_BTTN_CLICK.connect(self.__show_settings)
         window.ON_SELECT_ITEM_CLICK.connect(self.__select_item)
 
         # add listeners to validation logic output
         validator.add_listener(window.fill_ui_validation_log)
 
+        settings_ui = SettingsWindow(window)
+        settings_ui.save_bttn.clicked.connect(self.__save_settings)
+
         self.__validator = validator
-        self.__main_ui = window
         self.__configuration_provider = configuration_provider
+        self.__main_ui = window
+        self.__settings_ui = settings_ui
+
 
     def run(self):
         self.__main_ui.show()
@@ -418,6 +423,26 @@ class AssetValidatorTool():
         for selected_object in current_selected_list:
             print("{0} -> {1}".format("current_test_name", new_name))
             selected_object.rename(new_name)
+
+    def __show_settings(self):
+        self.__settings_ui.show()
+
+    def __save_settings(self):
+
+        names_input = self.__settings_ui.names_txt.toPlainText()
+        filters_input = self.__settings_ui.filters_txt.toPlainText()
+
+        #TODO: add validation for new settings
+
+        filter_ = self.__construct_list_from_string(filters_input)
+
+
+        self.__validator.set_filter(filter_)
+
+        self.__settings_ui.close()
+
+    def __construct_list_from_string(self, string):
+        return string.split(', ')
 
 
 # Connect UI with logical part and Run Tool
