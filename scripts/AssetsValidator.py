@@ -471,8 +471,6 @@ class AssetValidatorTool():
         return string.split(', ')
 
 
-# Connect UI with logical part and Run Tool
 if __name__ == "__main__":
-
     tool = AssetValidatorTool()
     tool.run()
