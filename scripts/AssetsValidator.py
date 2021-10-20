@@ -137,14 +137,27 @@ class MainWindow(QtWidgets.QDialog):
 
 # Settings UI
 class SettingsWindow(QtWidgets.QDialog):
+
     def __init__(self, window_parent):
         super(SettingsWindow, self).__init__(window_parent)
+
+        self.setWindowTitle("Settings")
         self.setWindowFlags(QtCore.Qt.Tool)
+
+        self.__names_txt = QtWidgets.QPlainTextEdit("Intern, Break, Tire_FR, Bumper_L, Door_L, Door_R")
+        self.__filters_txt = QtWidgets.QPlainTextEdit("camera, locator")
+        self.__save_bttn = QtWidgets.QPushButton("Save")
+
+        vlayout = QtWidgets.QVBoxLayout(self)
+        vlayout.addWidget(self.__names_txt)
+        vlayout.addWidget(self.__filters_txt)
+        vlayout.addWidget(self.__save_bttn)
     
 
 # Core Data Classes
 # Validation log data class
 class ValidationLog():
+
     def __init__(self):
         self.__current_log = {}
     
@@ -160,6 +173,7 @@ class ValidationLog():
 # Core Tool Configuration provider
 # Loading and Storing tool settings
 class ToolConfigurationProvider():
+
     def __init__(self):
         self.__rules_configuration = RuleConfiguration()
         self.__filters = []
@@ -189,6 +203,7 @@ class ToolConfigurationProvider():
 
 # Rules Configuration Data Class
 class RuleConfiguration():
+
     def __init__(self):
         self.__names = []
         self.__uvs = []
@@ -282,6 +297,7 @@ def get_validation_rules(configuration):
 # Validation Status Data Class
 # it tells what current status, is test passed and etc.
 class ValidationRuleStatus():
+
     def __init__(self, status_msg, is_passed):
         self.status_msg = status_msg
         self.is_passed = is_passed
@@ -305,6 +321,7 @@ class NameRule(object):
 
 # UV Set Validation Rules
 class UVSetRule(object):
+
     def __init__(self, config):
         self.NAME = "UVSets Status"
         self.set_configuration(config)
@@ -348,7 +365,8 @@ def rename_by_name(new_name):
         selected_object.rename(new_name)
 
 
-def create_settings_window(settings_parent):
+# show settings window
+def show_settings_window(settings_parent):
     ui = SettingsWindow(settings_parent)
     ui.show()
 
@@ -367,6 +385,44 @@ def get_columns(rules):
     return columns
 
 
+class AssetValidatorTool():
+    
+    def __init__(self):
+        configuration_provider = ToolConfigurationProvider()
+        configuration_provider.reload()
+        
+        rules_configuration = configuration_provider.get_rules_configuration()
+        rules = get_validation_rules(rules_configuration)
+
+        # main validator controller class
+        validator = AssetValidator(rules)
+
+        # pass validation filters to validator
+        filters = configuration_provider.get_filters()
+        validator.set_filter(filters)
+
+        # crating window instance with Maya Window as Parent
+        window = MainWindow(get_columns(rules), get_main_window())
+        # add names to ui drop box
+        window.populate_rename_list(rules_configuration.get_names_configuration())
+
+        # connection ui inputs and validation logic
+        window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
+        window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
+        window.ON_SETTINGS_BTTN_CLICK.connect(show_settings_window)
+        window.ON_SELECT_ITEM_CLICK.connect(select_item)
+
+        # add listeners to validation logic output
+        validator.add_listener(window.fill_ui_validation_log)
+
+        self.__main_ui = window
+        self.__configuration_provider = configuration_provider
+
+    def run(self):
+        self.__main_ui.show()
+
+
+
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
 
@@ -379,21 +435,24 @@ if __name__ == "__main__":
 
     # main validator controller class
     validator = AssetValidator(rules)
+
+    # pass validation filters to validator
     filters = configuration_provider.get_filters()
     validator.set_filter(filters)
 
     # crating window instance with Maya Window as Parent
     window = MainWindow(get_columns(rules), get_main_window())
+    # add names to ui drop box
+    window.populate_rename_list(rules_configuration.get_names_configuration())
 
     # connection ui inputs and validation logic
     window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
     window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
-    window.ON_SETTINGS_BTTN_CLICK.connect(create_settings_window)
+    window.ON_SETTINGS_BTTN_CLICK.connect(show_settings_window)
     window.ON_SELECT_ITEM_CLICK.connect(select_item)
 
+    # add listeners to validation logic output
     validator.add_listener(window.fill_ui_validation_log)
-
-    window.populate_rename_list(configuration)
 
     # starting tool
     window.show()
