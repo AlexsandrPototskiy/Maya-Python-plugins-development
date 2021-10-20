@@ -260,8 +260,8 @@ class ToolConfigurationProvider():
         self.__filters = []
     
     def reload(self):
-
         # TODO: read data from .json file
+
         self.__rules_configuration.set_name_configuration([
         "Intern",
         "Break",
@@ -395,17 +395,32 @@ class AssetValidatorTool():
         # add listeners to validation logic output
         validator.add_listener(window.fill_ui_validation_log)
 
+        # setup setting menu
         settings_ui = SettingsWindow(window)
         settings_ui.save_bttn.clicked.connect(self.__save_settings)
+        settings_ui.names_txt.setPlainText(self.__list_to_string(rules_configuration.get_names_configuration()))
+        settings_ui.uvs_text.setPlainText(self.__list_to_string(rules_configuration.get_uv_configuration()))
+        settings_ui.filters_txt.setPlainText(self.__list_to_string(filters))
 
         self.__validator = validator
         self.__configuration_provider = configuration_provider
         self.__main_ui = window
         self.__settings_ui = settings_ui
 
-    # Main entering point
+    # main entering point
     def run(self):
         self.__main_ui.show()
+
+    # construct string from list for setting menu
+    def __list_to_string(self, input_list):
+        string = ""
+
+        for i in range(0, len(input_list)):
+            string += input_list[i]
+            if i + 1 < len(input_list):
+               string += ", "
+
+        return string
 
     # select given maya object by name
     def __select_item(self, object_name):
