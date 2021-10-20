@@ -132,6 +132,7 @@ class MainWindow(QtWidgets.QDialog):
         self.__log_table.resizeColumnsToContents()
 
     def populate_rename_list(self, names):
+        self.__names_box.clear()
         self.__names_box.addItems(names)
 
 
@@ -145,11 +146,13 @@ class SettingsWindow(QtWidgets.QDialog):
         self.setWindowFlags(QtCore.Qt.Tool)
 
         self.names_txt = QtWidgets.QPlainTextEdit("Intern, Break, Tire_FR, Bumper_L, Door_L, Door_R")
+        self.uvs_text = QtWidgets.QPlainTextEdit("UVChannel_1, UVChannel_2")
         self.filters_txt = QtWidgets.QPlainTextEdit("camera, locator")
         self.save_bttn = QtWidgets.QPushButton("Save")
 
         vlayout = QtWidgets.QVBoxLayout(self)
         vlayout.addWidget(self.names_txt)
+        vlayout.addWidget(self.uvs_text)
         vlayout.addWidget(self.filters_txt)
         vlayout.addWidget(self.save_bttn)
     
@@ -200,6 +203,11 @@ class ToolConfigurationProvider():
     def get_filters(self):
         return self.__filters
 
+    def store_settings(self, names, uvs, filters):
+        self.__rules_configuration.set_name_configuration(names)
+        self.__rules_configuration.set_uv_sets_configuration(uvs)
+        self.__filters = filters
+
 
 # Rules Configuration Data Class
 class RuleConfiguration():
@@ -231,8 +239,14 @@ class AssetValidator():
         self.__rules = rules
         self.__ignorable_types = []
 
+
     def set_filter(self, ignorable_types):
         self.__ignorable_types = ignorable_types
+
+
+    def update_rules(self, rules):
+        self.__rules = rules
+
 
     def do_validation(self):
 
@@ -272,11 +286,13 @@ class AssetValidator():
                 data.add_log_item(s.name(), statuses)
                 
         return data
-    
+
+ 
     # notify all listners with current log
     def __notify_listners(self, log):
         for listenerKey in self.__output_listners:
             self.__output_listners[listenerKey](log)
+
     
     # add log output listner
     def add_listener(self, listener):
@@ -287,7 +303,7 @@ class AssetValidator():
 
 # Main Register function for validation logic
 def get_validation_rules(configuration):
-    print("[Validation Rules] Registering Rules")
+    print("[Validation Rules] Registering Rules {0}".format(type(configuration)))
     rules = []
     rules.append(NameRule(configuration.get_names_configuration()))
     rules.append(UVSetRule(configuration.get_uv_configuration()))
@@ -430,15 +446,25 @@ class AssetValidatorTool():
     def __save_settings(self):
 
         names_input = self.__settings_ui.names_txt.toPlainText()
+        uvs_input = self.__settings_ui.uvs_text.toPlainText()
         filters_input = self.__settings_ui.filters_txt.toPlainText()
 
         #TODO: add validation for new settings
 
-        filter_ = self.__construct_list_from_string(filters_input)
+        names = self.__construct_list_from_string(names_input)
+        uvs = self.__construct_list_from_string(uvs_input)
+        filters = self.__construct_list_from_string(filters_input)
 
+        # storing nmew settings to config file
+        self.__configuration_provider.store_settings(names, uvs, filters)
 
-        self.__validator.set_filter(filter_)
+        # updating validator
+        rules_config = self.__configuration_provider.get_rules_configuration()
+        rules = get_validation_rules(rules_config)
 
+        self.__validator.update_rules(rules)
+        self.__validator.set_filter(self.__configuration_provider.get_filters())
+        self.__main_ui.populate_rename_list(rules_config.get_names_configuration())
         self.__settings_ui.close()
 
     def __construct_list_from_string(self, string):
