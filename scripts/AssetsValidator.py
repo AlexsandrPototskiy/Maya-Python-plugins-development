@@ -11,6 +11,7 @@ All you have to do is to inherite from ValidationRule class implement 'apply_rul
 See NameRule or UVSetRule as example.
 Each Rule takes own data type NameRule takes list with names from data file, UVSetRule takes list of UV Set names etc.
 """
+import json
 import pymel.core as pm
 
 
@@ -85,7 +86,8 @@ class MainWindow(QtWidgets.QDialog):
         self.ON_VALIDATION_BTTN_CLICK.emit()
     
     def __rename_bttn_slot(self):
-        self.ON_RENAME_BTTN_CLICK.emit("test_name_from_combo_box")
+        content = self.__names_box.currentText()
+        self.ON_RENAME_BTTN_CLICK.emit(content)
 
     def __settings_bttn_slot(self):
         self.ON_SETTINGS_BTTN_CLICK.emit(self)
@@ -170,14 +172,11 @@ class AssetValidator():
         self.__rules = rules
         self.__ignorable_types = []
 
-
     def set_filter(self, ignorable_types):
         self.__ignorable_types = ignorable_types
 
-
     def update_rules(self, rules):
         self.__rules = rules
-
 
     def do_validation(self):
         # check if any objects selected
@@ -215,14 +214,12 @@ class AssetValidator():
                 data.add_log_item(s.name(), statuses)
                 
         return data
-
  
     # notify all listners with current log
     def __notify_listners(self, log):
         for listenerKey in self.__output_listners:
             self.__output_listners[listenerKey](log)
-
-    
+  
     # add log output listner
     def add_listener(self, listener):
         listener_id = id(listener)
@@ -324,11 +321,8 @@ class NameRule(object):
 
     def __init__(self, config):
         self.NAME = "Name Status"
-        self.set_configuration(config)
-    
-    def set_configuration(self, config):
         self.__names = config
-        
+           
     def apply_rule(self, scene_object):
         if scene_object.name() not in self.__names:
             return ValidationRuleStatus("Wrong Name", False)
@@ -340,11 +334,8 @@ class UVSetRule(object):
 
     def __init__(self, config):
         self.NAME = "UVSets Status"
-        self.set_configuration(config)
-    
-    def set_configuration(self, config):
         self.__settings = config
-    
+      
     def apply_rule(self, scene_object):
 
         all_relatives = pm.listRelatives(scene_object)
@@ -412,17 +403,14 @@ class AssetValidatorTool():
         self.__main_ui = window
         self.__settings_ui = settings_ui
 
-
     # Main entering point
     def run(self):
         self.__main_ui.show()
 
-
     # select given maya object by name
     def __select_item(self, object_name):
-        print("Selecting {0}".format(object_name))
+        print("[AssetValidator] Selecting {0}".format(object_name))
         pm.select(object_name)
-
 
     # rename seleted objects by given name
     def __rename(self, new_name):
@@ -430,16 +418,12 @@ class AssetValidatorTool():
         if len(current_selected_list) < 1:
             print("[AssetValidator] No Selection, please select at least one object to rename")
             return
-
         for selected_object in current_selected_list:
-            print("{0} -> {1}".format("current_test_name", new_name))
             selected_object.rename(new_name)
-
 
     # showing settings UI
     def __show_settings(self):
         self.__settings_ui.show()
-
 
     # tying to save new settings
     def __save_settings(self):
@@ -477,11 +461,9 @@ class AssetValidatorTool():
         # closing setting window
         self.__settings_ui.close()
 
-
     # convert string to list[]
     def __construct_list_from_string(self, input_str):
         return input_str.split(', ')
-
 
     # validate given string for errors
     def __validate_string(self, string):
@@ -493,7 +475,6 @@ class AssetValidatorTool():
                 return False
 
         return True
-
 
     # create column names list from rules
     def __create_columns(self, rules):
