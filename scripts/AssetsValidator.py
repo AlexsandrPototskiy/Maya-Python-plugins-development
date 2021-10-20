@@ -20,7 +20,9 @@ from PySide2 import QtCore, QtWidgets, QtGui
 import maya.OpenMayaUI as omui
 
 
-# Core UI Implementation
+'''
+UI
+'''
 # Get instance of Maya main window via  wrapInstance and Maya API
 def get_main_window():
     main = omui.MQtUtil.mainWindow()
@@ -155,9 +157,78 @@ class SettingsWindow(QtWidgets.QDialog):
         vlayout.addWidget(self.uvs_text)
         vlayout.addWidget(self.filters_txt)
         vlayout.addWidget(self.save_bttn)
-    
 
-# Core Data Classes
+
+'''
+VALIDATION CONTROLLER
+'''
+# Validate given assets with different validation rules
+class AssetValidator():
+    
+    def __init__(self, rules):
+        self.__output_listners = {}
+        self.__rules = rules
+        self.__ignorable_types = []
+
+
+    def set_filter(self, ignorable_types):
+        self.__ignorable_types = ignorable_types
+
+
+    def update_rules(self, rules):
+        self.__rules = rules
+
+
+    def do_validation(self):
+        # check if any objects selected
+        current_scene_objects = pm.selected()
+
+        if len(current_scene_objects) < 1:
+            # get current scene objects
+            current_scene_objects = pm.ls(transforms=True)
+
+        filtred_objects = []
+
+        # filtering maya scene objects
+        for scene_object in current_scene_objects:
+            first_relative = pm.listRelatives(scene_object, ad = True)[0]
+            if first_relative.nodeType() not in self.__ignorable_types:
+                filtred_objects.append(scene_object)
+        
+        # do not validate anything if no objects is filtered
+        if len(filtred_objects) < 1:
+            print("[AssetValidator] No Objects in Scene")
+            return
+
+        # validating
+        validation_data = self.__validate(filtred_objects)
+        self.__notify_listners(validation_data)
+    
+    # validate given object
+    def __validate(self, scene_objects):
+        data = ValidationLog()
+        # apply rules for each scene object
+        for s in scene_objects:
+            statuses = []
+            for rule in self.__rules:
+                statuses.append(rule.apply_rule(s))
+                data.add_log_item(s.name(), statuses)
+                
+        return data
+
+ 
+    # notify all listners with current log
+    def __notify_listners(self, log):
+        for listenerKey in self.__output_listners:
+            self.__output_listners[listenerKey](log)
+
+    
+    # add log output listner
+    def add_listener(self, listener):
+        listener_id = id(listener)
+        self.__output_listners[listener_id] = listener
+
+
 # Validation log data class
 class ValidationLog():
 
@@ -173,7 +244,17 @@ class ValidationLog():
         return self.__current_log
 
 
-# Core Tool Configuration provider
+'''
+VALIDATION RULES
+'''
+# Main Register function for validation logic
+def get_validation_rules(configuration):
+    rules = []
+    rules.append(NameRule(configuration.get_names_configuration()))
+    rules.append(UVSetRule(configuration.get_uv_configuration()))
+    return rules
+
+
 # Loading and Storing tool settings
 class ToolConfigurationProvider():
 
@@ -227,87 +308,6 @@ class RuleConfiguration():
 
     def get_uv_configuration(self):
         return self.__uvs
-
-
-
-# Core validation logic
-# Validate given assets with different validation rules
-class AssetValidator():
-    
-    def __init__(self, rules):
-        self.__output_listners = {}
-        self.__rules = rules
-        self.__ignorable_types = []
-
-
-    def set_filter(self, ignorable_types):
-        self.__ignorable_types = ignorable_types
-
-
-    def update_rules(self, rules):
-        self.__rules = rules
-
-
-    def do_validation(self):
-
-        # check if any objects selected
-        current_scene_objects = pm.selected()
-
-        if len(current_scene_objects) < 1:
-            # get current scene objects
-            current_scene_objects = pm.ls(transforms=True)
-
-        filtred_objects = []
-
-        # filtering maya scene objects
-        for scene_object in current_scene_objects:
-            first_relative = pm.listRelatives(scene_object, ad = True)[0]
-            if first_relative.nodeType() not in self.__ignorable_types:
-                filtred_objects.append(scene_object)
-        
-        # do not validate anything if no objects is filtered
-        if len(filtred_objects) < 1:
-            print("No Objects in Scene")
-            return
-
-        # validating
-        validation_data = self.__validate(filtred_objects)
-        self.__notify_listners(validation_data)
-    
-    # validate given object
-    def __validate(self, scene_objects):
-        
-        data = ValidationLog()
-        # apply rules for each scene object
-        for s in scene_objects:
-            statuses = []
-            for rule in self.__rules:
-                statuses.append(rule.apply_rule(s))
-                data.add_log_item(s.name(), statuses)
-                
-        return data
-
- 
-    # notify all listners with current log
-    def __notify_listners(self, log):
-        for listenerKey in self.__output_listners:
-            self.__output_listners[listenerKey](log)
-
-    
-    # add log output listner
-    def add_listener(self, listener):
-        listener_id = id(listener)
-        print("Adding Listner with ID: {0}".format(listener_id))
-        self.__output_listners[listener_id] = listener
-
-
-# Main Register function for validation logic
-def get_validation_rules(configuration):
-    print("[Validation Rules] Registering Rules {0}".format(type(configuration)))
-    rules = []
-    rules.append(NameRule(configuration.get_names_configuration()))
-    rules.append(UVSetRule(configuration.get_uv_configuration()))
-    return rules
 
 
 # Validation Status Data Class
@@ -368,25 +368,14 @@ class UVSetRule(object):
         return ValidationRuleStatus("Ok", True)
 
 
-# show settings window
-def show_settings_window(settings_parent):
-    ui = SettingsWindow(settings_parent)
-    ui.show()
-
-
-# construct UI columns base on rules name
-def get_columns(rules):
-    columns = ["Object Name"]
-    for r in rules:
-        columns.append(r.NAME)
-    return columns
-
-
+'''
+ASSET VALIDATOR TOOL
+'''
 # Main Tool Logic
 class AssetValidatorTool():
 
+    # constucting and connecting all dependencies for tool
     def __init__(self):
-
         configuration_provider = ToolConfigurationProvider()
         configuration_provider.reload()
         
@@ -400,8 +389,9 @@ class AssetValidatorTool():
         filters = configuration_provider.get_filters()
         validator.set_filter(filters)
 
-        # crating window instance with Maya Window as Parent
-        window = MainWindow(get_columns(rules), get_main_window())
+        # creating window instance with Maya Window as Parent
+        window = MainWindow(self.__create_columns(rules), get_main_window())
+
         # add names to ui drop box
         window.populate_rename_list(rules_configuration.get_names_configuration())
 
@@ -423,52 +413,94 @@ class AssetValidatorTool():
         self.__settings_ui = settings_ui
 
 
+    # Main entering point
     def run(self):
         self.__main_ui.show()
 
+
+    # select given maya object by name
     def __select_item(self, object_name):
         print("Selecting {0}".format(object_name))
         pm.select(object_name)
 
+
+    # rename seleted objects by given name
     def __rename(self, new_name):
         current_selected_list = pm.ls(selection=True)
         if len(current_selected_list) < 1:
-            print("No Selection, please select at least one object to rename")
+            print("[AssetValidator] No Selection, please select at least one object to rename")
             return
 
         for selected_object in current_selected_list:
             print("{0} -> {1}".format("current_test_name", new_name))
             selected_object.rename(new_name)
 
+
+    # showing settings UI
     def __show_settings(self):
         self.__settings_ui.show()
 
-    def __save_settings(self):
 
+    # tying to save new settings
+    def __save_settings(self):
         names_input = self.__settings_ui.names_txt.toPlainText()
         uvs_input = self.__settings_ui.uvs_text.toPlainText()
         filters_input = self.__settings_ui.filters_txt.toPlainText()
 
-        #TODO: add validation for new settings
+        if self.__validate_string(names_input) == False:
+            print("[AssetValidator] setting names has wrong syntax: {0}".format(names_input))
+            return
+
+        if self.__validate_string(uvs_input) == False:
+            print("[AssetValidator] setting uvs has wrong syntax: {0}".format(uvs_input))
+            return
 
         names = self.__construct_list_from_string(names_input)
         uvs = self.__construct_list_from_string(uvs_input)
-        filters = self.__construct_list_from_string(filters_input)
 
-        # storing nmew settings to config file
+        filters = []
+        if self.__validate_string(filters_input):
+            filters = self.__construct_list_from_string(filters_input)
+
+        # storing new settings to config file
         self.__configuration_provider.store_settings(names, uvs, filters)
 
-        # updating validator
+        # configuring rules
         rules_config = self.__configuration_provider.get_rules_configuration()
         rules = get_validation_rules(rules_config)
 
+        # updating UI, Validator
         self.__validator.update_rules(rules)
         self.__validator.set_filter(self.__configuration_provider.get_filters())
         self.__main_ui.populate_rename_list(rules_config.get_names_configuration())
+
+        # closing setting window
         self.__settings_ui.close()
 
-    def __construct_list_from_string(self, string):
-        return string.split(', ')
+
+    # convert string to list[]
+    def __construct_list_from_string(self, input_str):
+        return input_str.split(', ')
+
+
+    # validate given string for errors
+    def __validate_string(self, string):
+        if not string:
+            return False
+
+        for symbal in string:
+            if symbal in ["#", "*", "!", "$", "%"]:
+                return False
+
+        return True
+
+
+    # create column names list from rules
+    def __create_columns(self, rules):
+        columns = ["Object Name"]
+        for r in rules:
+            columns.append(r.NAME)
+        return columns
 
 
 if __name__ == "__main__":
