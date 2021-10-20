@@ -352,29 +352,10 @@ class UVSetRule(object):
         return ValidationRuleStatus("Ok", True)
 
 
-# Core ReNaming Logic
-# Main entry point of Renamer
-def rename_by_name(new_name):
-    current_selected_list = pm.ls(selection=True)
-    if len(current_selected_list) < 1:
-        print("No Selection, please select at least one object to rename")
-        return
-
-    for selected_object in current_selected_list:
-        print("{0} -> {1}".format("current_test_name", new_name))
-        selected_object.rename(new_name)
-
-
 # show settings window
 def show_settings_window(settings_parent):
     ui = SettingsWindow(settings_parent)
     ui.show()
-
-
-# select object in scene
-def select_item(object_name):
-    print("Selecting {0}".format(object_name))
-    pm.select(object_name)
 
 
 # construct UI columns base on rules name
@@ -385,9 +366,11 @@ def get_columns(rules):
     return columns
 
 
+# Main Tool Logic
 class AssetValidatorTool():
-    
+
     def __init__(self):
+        
         configuration_provider = ToolConfigurationProvider()
         configuration_provider.reload()
         
@@ -408,51 +391,37 @@ class AssetValidatorTool():
 
         # connection ui inputs and validation logic
         window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
-        window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
+        window.ON_RENAME_BTTN_CLICK.connect(self.__rename)
         window.ON_SETTINGS_BTTN_CLICK.connect(show_settings_window)
-        window.ON_SELECT_ITEM_CLICK.connect(select_item)
+        window.ON_SELECT_ITEM_CLICK.connect(self.__select_item)
 
         # add listeners to validation logic output
         validator.add_listener(window.fill_ui_validation_log)
 
+        self.__validator = validator
         self.__main_ui = window
         self.__configuration_provider = configuration_provider
 
     def run(self):
         self.__main_ui.show()
 
+    def __select_item(self, object_name):
+        print("Selecting {0}".format(object_name))
+        pm.select(object_name)
+
+    def __rename(self, new_name):
+        current_selected_list = pm.ls(selection=True)
+        if len(current_selected_list) < 1:
+            print("No Selection, please select at least one object to rename")
+            return
+
+        for selected_object in current_selected_list:
+            print("{0} -> {1}".format("current_test_name", new_name))
+            selected_object.rename(new_name)
 
 
 # Connect UI with logical part and Run Tool
 if __name__ == "__main__":
 
-    # main configuration
-    configuration_provider = ToolConfigurationProvider()
-    configuration_provider.reload()
-    
-    rules_configuration = configuration_provider.get_rules_configuration()
-    rules = get_validation_rules(rules_configuration)
-
-    # main validator controller class
-    validator = AssetValidator(rules)
-
-    # pass validation filters to validator
-    filters = configuration_provider.get_filters()
-    validator.set_filter(filters)
-
-    # crating window instance with Maya Window as Parent
-    window = MainWindow(get_columns(rules), get_main_window())
-    # add names to ui drop box
-    window.populate_rename_list(rules_configuration.get_names_configuration())
-
-    # connection ui inputs and validation logic
-    window.ON_VALIDATION_BTTN_CLICK.connect(validator.do_validation)
-    window.ON_RENAME_BTTN_CLICK.connect(rename_by_name)
-    window.ON_SETTINGS_BTTN_CLICK.connect(show_settings_window)
-    window.ON_SELECT_ITEM_CLICK.connect(select_item)
-
-    # add listeners to validation logic output
-    validator.add_listener(window.fill_ui_validation_log)
-
-    # starting tool
-    window.show()
+    tool = AssetValidatorTool()
+    tool.run()
