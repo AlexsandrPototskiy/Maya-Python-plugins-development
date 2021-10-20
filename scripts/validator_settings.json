@@ -1,0 +1,13 @@
+{
+     "uvs": [
+          "map1", 
+          "map2"
+     ], 
+     "names": [
+          "Bumper", 
+          "Other12345"
+     ], 
+     "filters": [
+          "camera"
+     ]
+}

@@ -11,6 +11,8 @@ All you have to do is to inherite from ValidationRule class implement 'apply_rul
 See NameRule or UVSetRule as example.
 Each Rule takes own data type NameRule takes list with names from data file, UVSetRule takes list of UV Set names etc.
 """
+import sys
+import os
 import json
 import pymel.core as pm
 
@@ -255,25 +257,20 @@ def get_validation_rules(configuration):
 # Loading and Storing tool settings
 class ToolConfigurationProvider():
 
-    def __init__(self):
+    def __init__(self, path):
         self.__rules_configuration = RuleConfiguration()
         self.__filters = []
+        self.__path = path
     
     def reload(self):
-        # TODO: read data from .json file
+        json_data = {}
+        with open(self.__path, 'r') as j:
+            json_data = json.load(j)
+            print(json_data)
 
-        self.__rules_configuration.set_name_configuration([
-        "Intern",
-        "Break",
-        "Tire_FR",
-        "Bumper_L", 
-        "Door_L",
-        "Door_R"
-        ])
-
-        self.__rules_configuration.set_uv_sets_configuration(["UVChannel_1", "UVChannel_2"])
-
-        self.__filters = ["camera"]
+        self.__rules_configuration.set_name_configuration(json_data["names"])
+        self.__rules_configuration.set_uv_sets_configuration(json_data["uvs"])
+        self.__filters = json_data["filters"]
     
     def get_rules_configuration(self):
         return self.__rules_configuration
@@ -285,6 +282,16 @@ class ToolConfigurationProvider():
         self.__rules_configuration.set_name_configuration(names)
         self.__rules_configuration.set_uv_sets_configuration(uvs)
         self.__filters = filters
+
+        json_data = {}
+        json_data["names"] = names
+        json_data["uvs"] = uvs
+        json_data["filters"] = filters
+
+        with open(self.__path, 'w') as file:
+            json.dump(json_data, file, indent=5)
+
+
 
 
 # Rules Configuration Data Class
@@ -366,8 +373,8 @@ ASSET VALIDATOR TOOL
 class AssetValidatorTool():
 
     # constucting and connecting all dependencies for tool
-    def __init__(self):
-        configuration_provider = ToolConfigurationProvider()
+    def __init__(self, path):
+        configuration_provider = ToolConfigurationProvider(path)
         configuration_provider.reload()
         
         rules_configuration = configuration_provider.get_rules_configuration()
@@ -498,7 +505,22 @@ class AssetValidatorTool():
             columns.append(r.NAME)
         return columns
 
+def get_current_configuration_file():
+    current_file_directory = os.path.dirname(os.path.abspath(__file__))
+    file_name = '/validator_settings.json'
+    path = os.path.abspath(current_file_directory + file_name)
+    return path
 
-if __name__ == "__main__":
-    tool = AssetValidatorTool()
+
+def run():
+
+    path = get_current_configuration_file()
+    if os.path.exists(path) == False:
+        print("[Asset Validator] No configuration file was included please check if file exist as path {0}".format(path))
+        return None
+
+    print("[Asset Validator] Starting tool")
+    tool = AssetValidatorTool(path)
     tool.run()
+
+    return tool
