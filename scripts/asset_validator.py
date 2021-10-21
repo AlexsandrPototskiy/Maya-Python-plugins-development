@@ -62,30 +62,28 @@ class MainWindow(QtWidgets.QDialog):
         #setting title
         self.setWindowTitle("Asset Validator")
         
-        # main windoww grp
+        # main window grp
         app_layout = QtWidgets.QVBoxLayout(self)
 
-        # creating settings layout
-        settings_layout = QtWidgets.QVBoxLayout()
-        self.__settings_bttn = QtWidgets.QPushButton("Settings")
+        # main inputs
+        self.__settings_bttn = QtWidgets.QPushButton("...")
+        self.__settings_bttn.setMinimumSize(25,25)
+        self.__settings_bttn.setMaximumSize(25,25)
         self.__settings_bttn.clicked.connect(self.__settings_bttn_slot)
-        settings_layout.addWidget(self.__settings_bttn)
-        app_layout.addLayout(settings_layout)
-
-        # creating validation layout
-        validation_layout = QtWidgets.QVBoxLayout()
         self.__validate_bttn = QtWidgets.QPushButton("Validate")
         self.__validate_bttn.clicked.connect(self.__validate_bttn_slot)
+
+        main_input_panel = QtWidgets.QHBoxLayout()
+        main_input_panel.addWidget(self.__validate_bttn)
+        main_input_panel.addWidget(self.__settings_bttn)
+        app_layout.addLayout(main_input_panel)
+
+        # main log table
         self.__log_table = QtWidgets.QTableWidget()
         self.__log_table.setColumnCount(len(columns_names))
         self.__log_table.setHorizontalHeaderLabels(columns_names)
         self.__log_table.clicked.connect(self.__on_item_clicked)
-
-        validation_layout.addWidget(QtWidgets.QLabel("Validate Objects Names:"))
-        validation_layout.addWidget(self.__validate_bttn)
-        validation_layout.addWidget(QtWidgets.QLabel("Status Log:"))
-        validation_layout.addWidget(self.__log_table)
-        app_layout.addLayout(validation_layout)
+        app_layout.addWidget(self.__log_table)
         
         # creating renamer layout
         renamer_layout = QtWidgets.QVBoxLayout()
