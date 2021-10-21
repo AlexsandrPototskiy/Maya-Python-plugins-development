@@ -278,12 +278,11 @@ def get_validation_rules(configuration):
     custom_rules = custom_module.register_custom_rules()
 
     if not isinstance(custom_rules, list):
-        print("{0} Fail to register custom rules register_custom_rules must return list".format(MODULE_TAG))
-        return rules
+        raise  TypeError("{0} fail to register custom rules register_custom_rules must return list".format(MODULE_TAG))
 
-    if custom_rules == []:
+    if len(custom_rules) < 1:
         print("{0} no custom rules was provided".format(MODULE_TAG))
-        return
+        return rules
 
     for c in custom_rules:
         if not isinstance(c, custom_module.CustomAbstractRule):

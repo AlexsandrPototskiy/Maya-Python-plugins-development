@@ -21,7 +21,7 @@ class CustomAbstractRule(BaseAbstractRule):
 def register_custom_rules():
 	rules = []
 	# implement your validation rule and add it to list
-	rules.append(TestCustomRule())
+	#rules.append(TestCustomRule())
 	return rules
 
 

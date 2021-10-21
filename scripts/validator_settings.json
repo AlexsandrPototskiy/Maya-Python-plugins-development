@@ -4,9 +4,24 @@
           "map2"
      ], 
      "names": [
-          "Bumper", 
-          "Hood", 
-          "pCube1"
+          "Intern", 
+          "SterringWheel", 
+          "Break", 
+          "Shift", 
+          "Tire_FL", 
+          "Piston_FR", 
+          "Piston_RR", 
+          "Piston_FL", 
+          "Piston_RL", 
+          "Optic_RR1", 
+          "Optic_RL1", 
+          "Optic_RR", 
+          "Optic_RL", 
+          "Rim_FL", 
+          "Exhaust", 
+          "Optics_FL", 
+          "Optics_FR", 
+          "Optics_RR"
      ], 
      "filters": [
           "camera"
