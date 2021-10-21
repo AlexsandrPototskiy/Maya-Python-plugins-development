@@ -60,7 +60,7 @@ class MainWindow(QtWidgets.QDialog):
 
     def __build_ui(self, columns_names):
         #setting title
-        self.setWindowTitle("Asset Validator")
+        self.setWindowTitle("Asset Validator V1.0.0b")
         
         # main window grp
         app_layout = QtWidgets.QVBoxLayout(self)
