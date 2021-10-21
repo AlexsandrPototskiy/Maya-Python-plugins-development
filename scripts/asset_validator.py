@@ -161,6 +161,9 @@ class SettingsWindow(QtWidgets.QDialog):
 
         self.setWindowTitle("Settings")
         self.setWindowFlags(QtCore.Qt.Tool)
+        self.setMinimumSize(300,300)
+        self.setMaximumSize(300,300)
+
 
         self.names_txt = QtWidgets.QPlainTextEdit()
         self.uvs_text = QtWidgets.QPlainTextEdit()
@@ -169,8 +172,11 @@ class SettingsWindow(QtWidgets.QDialog):
         self.__status_lbl = QtWidgets.QLabel("current status: ok")
 
         vlayout = QtWidgets.QVBoxLayout(self)
+        vlayout.addWidget(QtWidgets.QLabel("Object Names:"))
         vlayout.addWidget(self.names_txt)
+        vlayout.addWidget(QtWidgets.QLabel("UV Sets names and amount:"))
         vlayout.addWidget(self.uvs_text)
+        vlayout.addWidget(QtWidgets.QLabel("Type of objects to ignore:"))
         vlayout.addWidget(self.filters_txt)
         vlayout.addWidget(self.save_bttn)
         vlayout.addWidget(self.__status_lbl)
