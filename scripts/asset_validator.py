@@ -519,7 +519,10 @@ class AssetValidatorTool():
 
     # convert string to list[]
     def __construct_list_from_string(self, input_str):
-        return input_str.split(', ')
+        replaced = input_str.replace("\n", '')
+        string = input_str.replace(" ", "")
+        array = string.split(',')
+        return array
 
     # validate given string for errors
     def __validate_string(self, string):
