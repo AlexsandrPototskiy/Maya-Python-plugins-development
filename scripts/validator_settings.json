@@ -5,7 +5,8 @@
      ], 
      "names": [
           "Bumper", 
-          "Other12345"
+          "Hood", 
+          "pCube1"
      ], 
      "filters": [
           "camera"

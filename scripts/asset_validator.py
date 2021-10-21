@@ -162,16 +162,21 @@ class SettingsWindow(QtWidgets.QDialog):
         self.setWindowTitle("Settings")
         self.setWindowFlags(QtCore.Qt.Tool)
 
-        self.names_txt = QtWidgets.QPlainTextEdit("Intern, Break, Tire_FR, Bumper_L, Door_L, Door_R")
-        self.uvs_text = QtWidgets.QPlainTextEdit("UVChannel_1, UVChannel_2")
-        self.filters_txt = QtWidgets.QPlainTextEdit("camera, locator")
+        self.names_txt = QtWidgets.QPlainTextEdit()
+        self.uvs_text = QtWidgets.QPlainTextEdit()
+        self.filters_txt = QtWidgets.QPlainTextEdit()
         self.save_bttn = QtWidgets.QPushButton("Save")
+        self.__status_lbl = QtWidgets.QLabel("current status: ok")
 
         vlayout = QtWidgets.QVBoxLayout(self)
         vlayout.addWidget(self.names_txt)
         vlayout.addWidget(self.uvs_text)
         vlayout.addWidget(self.filters_txt)
         vlayout.addWidget(self.save_bttn)
+        vlayout.addWidget(self.__status_lbl)
+
+    def display_status(self, msg):
+        self.__status_lbl.setText(msg)
 
 
 '''
@@ -471,11 +476,13 @@ class AssetValidatorTool():
         filters_input = self.__settings_ui.filters_txt.toPlainText()
 
         if self.__validate_string(names_input) == False:
-            print("{0} setting names has wrong syntax: {1}".format(MODULE_TAG, names_input))
+            msg = '"names" has wrong syntax'
+            self.__display_settings_status_msg(msg)
             return
 
         if self.__validate_string(uvs_input) == False:
-            print("{0} setting uvs has wrong syntax: {1}".format(MODULE_TAG, uvs_input))
+            msg = '"uvs" has wrong syntax'
+            self.__display_settings_status_msg(msg)
             return
 
         names = self.__construct_list_from_string(names_input)
@@ -497,8 +504,13 @@ class AssetValidatorTool():
         self.__validator.set_filter(self.__configuration_provider.get_filters())
         self.__main_ui.populate_rename_list(rules_config.get_names_configuration())
 
+        self.__display_settings_status_msg("settings ok")
         # closing setting window
         self.__settings_ui.close()
+
+    def __display_settings_status_msg(self, msg):
+        self.__settings_ui.display_status(msg)
+        print("{0} {1}".format(MODULE_TAG, msg))
 
     # convert string to list[]
     def __construct_list_from_string(self, input_str):
