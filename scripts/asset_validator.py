@@ -274,7 +274,11 @@ def get_validation_rules(configuration):
 
     if custom_rules == []:
         print("{0} no custom rules was provided".format(MODULE_TAG))
-        return rules
+        return
+
+    for c in custom_rules:
+        if not isinstance(c, custom_module.CustomAbstractRule):
+            raise  TypeError("{0} one of the custom rule is not subclass of CustomAbstractRule abstract class".format(MODULE_TAG))
     
     rules.extend(custom_rules)
     return rules
