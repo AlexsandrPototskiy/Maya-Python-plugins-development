@@ -2,26 +2,39 @@
 Asset Validation tool
 Made By Alex Pototskyi
 
-Tool was inpired by multiple issues that I strogle when was working as Techical Artist,
-each time with new project we was needed to create anouther tool that will help to fix project needs with names, pivots, uv sets and etc.
+Tool was inpired by multiple issues that I strogle when was working as Techical Artist.
+Several time I was requested to create anouther tool that will help to fix project needs with names, 
+pivots, uv sets and etc.
 
 Tool was designed as Flexible and Reusable, everyone who wants to improve it can do that.
-You can implement your own ValidationRule and apply 'special case' to object.
-All you have to do is to inherite from ValidationRule class implement 'apply_rule' function that takes Maya object as input.
-See NameRule or UVSetRule as example.
-Each Rule takes own data type NameRule takes list with names from data file, UVSetRule takes list of UV Set names etc.
+You can implement your own ValidationRule and apply 'special case' to maya_object.
+
+To Implement your own validation rule you need:
+- implement class with function apply_rule() in custom_validation_rule.py that inherited from CustomAbstractRule;
+- function must take one input -> maya_object;
+- function should return ValidationStatus data class with validation result status message and is_passed boolean;
+- after that you need to register you rule in register_custom_rule() function;
 """
 import sys
 import os
 import json
 import pymel.core as pm
 
+#core imports
+from base_abstract_rule import BaseAbstractRule
+from validator_data_classes import ValidationRuleStatus
 
-# Main QT imports
+# main QT imports
 from shiboken2 import wrapInstance
 from PySide2 import QtCore, QtWidgets, QtGui
 import maya.OpenMayaUI as omui
 
+
+#custom implementation imports
+import custom_validation_rules as custom_module
+
+
+MODULE_TAG = "[Asset Validator]"
 
 '''
 UI
@@ -198,7 +211,7 @@ class AssetValidator():
         
         # do not validate anything if no objects is filtered
         if len(filtred_objects) < 1:
-            print("[AssetValidator] No Objects in Scene")
+            print("{0} No Objects in Scene".format(MODULE_TAG))
             return
 
         # validating
@@ -251,6 +264,19 @@ def get_validation_rules(configuration):
     rules = []
     rules.append(NameRule(configuration.get_names_configuration()))
     rules.append(UVSetRule(configuration.get_uv_configuration()))
+
+    # getting custom rules
+    custom_rules = custom_module.register_custom_rules()
+
+    if not isinstance(custom_rules, list):
+        print("{0} Fail to register custom rules register_custom_rules must return list".format(MODULE_TAG))
+        return rules
+
+    if custom_rules == []:
+        print("{0} no custom rules was provided".format(MODULE_TAG))
+        return rules
+    
+    rules.extend(custom_rules)
     return rules
 
 
@@ -292,8 +318,6 @@ class ToolConfigurationProvider():
             json.dump(json_data, file, indent=5)
 
 
-
-
 # Rules Configuration Data Class
 class RuleConfiguration():
 
@@ -314,17 +338,8 @@ class RuleConfiguration():
         return self.__uvs
 
 
-# Validation Status Data Class
-# it tells what current status, is test passed and etc.
-class ValidationRuleStatus():
-
-    def __init__(self, status_msg, is_passed):
-        self.status_msg = status_msg
-        self.is_passed = is_passed
-
-
 # Names Validation Rule
-class NameRule(object):
+class NameRule(BaseAbstractRule):
 
     def __init__(self, config):
         self.NAME = "Name Status"
@@ -337,7 +352,7 @@ class NameRule(object):
 
 
 # UV Set Validation Rules
-class UVSetRule(object):
+class UVSetRule(BaseAbstractRule):
 
     def __init__(self, config):
         self.NAME = "UVSets Status"
@@ -431,14 +446,14 @@ class AssetValidatorTool():
 
     # select given maya object by name
     def __select_item(self, object_name):
-        print("[AssetValidator] Selecting {0}".format(object_name))
+        print("{0} Selecting {1}".format(MODULE_TAG, object_name))
         pm.select(object_name)
 
     # rename seleted objects by given name
     def __rename(self, new_name):
         current_selected_list = pm.ls(selection=True)
         if len(current_selected_list) < 1:
-            print("[AssetValidator] No Selection, please select at least one object to rename")
+            print("{0} No Selection, please select at least one object to rename".format(MODULE_TAG))
             return
         for selected_object in current_selected_list:
             selected_object.rename(new_name)
@@ -454,11 +469,11 @@ class AssetValidatorTool():
         filters_input = self.__settings_ui.filters_txt.toPlainText()
 
         if self.__validate_string(names_input) == False:
-            print("[AssetValidator] setting names has wrong syntax: {0}".format(names_input))
+            print("{0} setting names has wrong syntax: {1}".format(MODULE_TAG, names_input))
             return
 
         if self.__validate_string(uvs_input) == False:
-            print("[AssetValidator] setting uvs has wrong syntax: {0}".format(uvs_input))
+            print("{0} setting uvs has wrong syntax: {1}".format(MODULE_TAG, uvs_input))
             return
 
         names = self.__construct_list_from_string(names_input)
@@ -516,10 +531,11 @@ def run():
 
     path = get_current_configuration_file()
     if os.path.exists(path) == False:
-        print("[Asset Validator] No configuration file was included please check if file exist as path {0}".format(path))
+        print("{0} No configuration file was included please check if file exist as path {1}".format(MODULE_TAG,path))
         return None
 
-    print("[Asset Validator] Starting tool")
+    print("{0} Starting tool".format(MODULE_TAG))
+    reload(custom_module)
     tool = AssetValidatorTool(path)
     tool.run()
 
