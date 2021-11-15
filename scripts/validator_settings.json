@@ -1,0 +1,51 @@
+{
+     "uvs": [
+          "map1", 
+          "map2"
+     ], 
+     "names": [
+          "Intern", 
+          "SteeringWheel", 
+          "Break", 
+          "Shift", 
+          "Tire_FL", 
+          "Piston_FR", 
+          "Piston_RR", 
+          "Piston_FL", 
+          "Piston_RL", 
+          "Optic_RR1", 
+          "Optic_RL1", 
+          "Optic_RR", 
+          "Optic_RL", 
+          "Rim_FL", 
+          "Exhaust", 
+          "Optics_FL", 
+          "Optics_FR", 
+          "Optics_RR", 
+          "Glass_FR", 
+          "Glass_FL", 
+          "Glass_F", 
+          "Wiper_R", 
+          "Wiper_L", 
+          "Mirror_R", 
+          "Mirror_L", 
+          "Body", 
+          "Boot", 
+          "Door_L", 
+          "Door_R", 
+          "Bumper_L", 
+          "Bumber_R", 
+          "Hood", 
+          "Engine", 
+          "Optics_FR", 
+          "Rim_FR", 
+          "Rim_BR", 
+          "Rim_BL", 
+          "Tire_BR", 
+          "Tire_BL", 
+          "Tire_FR"
+     ], 
+     "filters": [
+          "camera"
+     ]
+}

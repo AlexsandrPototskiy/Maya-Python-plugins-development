@@ -25,3 +25,4 @@ windowPref -topLeftCorner 470 853 -widthHeight 640 480 -maximized false -parentM
 windowPref -topLeftCorner 470 853 -widthHeight 546 350 -maximized false -parentMain true OptionBoxWindow;
 windowPref -topLeftCorner 470 853 -widthHeight 380 730 -maximized false -parentMain true createRenderNodeWindow;
 windowPref -topLeftCorner 431 592 -widthHeight 256 262 -maximized false -parentMain true uvSetEditor;
+windowPref -topLeftCorner 470 853 -widthHeight 470 536 -maximized false -parentMain true shelfEditor;
