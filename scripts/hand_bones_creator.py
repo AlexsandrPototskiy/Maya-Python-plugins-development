@@ -1,9 +1,7 @@
-offset_between = 100
-
 suffix = "_JNT"
 
 
-def create_palm(fingers_amount, falangs_amount, base_distance, display_radius, falang_distance):
+def create_palm(fingers_amount, falangs_amount, base_distance, display_radius, falang_distance, offset_between):
 	
 	selection = cmds.ls(selection = True)
 	
@@ -63,7 +61,7 @@ class HandBonesCreator():
 		self.fingers_amount = 5
 		cmds.rowLayout(p = column, nc = 3)
 		cmds.text(label="Fingers:")
-		self.fingers_slider = cmds.intSlider(step = 1, w = 200, value = self.fingers_amount, min = 2, max = 10, dc = self.__change_fingers)
+		self.fingers_slider = cmds.intSlider(step = 1, w = 200, value = self.fingers_amount, min = 1, max = 10, dc = self.__change_fingers)
 		self.finger_text = cmds.text(w = 25, label = str(self.fingers_amount))
 		
 		# bones layout
@@ -90,6 +88,13 @@ class HandBonesCreator():
 		self.falang_distance_slider = cmds.floatSlider(w = 150, value = self.falang_distance, min = 0.01, max = 80, dc = self.__update_falang_distance)
 		self.falang_distance_text = cmds.text(w = 35, label = str(self.falang_distance))
 		
+		#offset between
+		self.offset_between = 100
+		cmds.rowLayout(p = column, nc = 3)
+		cmds.text(label="Offset Between:")
+		self.offset_slider = cmds.floatSlider(w = 150, value = self.offset_between, min = 0.01, max = 200, dc = self._update_offset)
+		self.offset_text = cmds.text(w = 35, label = str(self.offset_between))
+		
 		#radius
 		self.radius = 5
 		cmds.rowLayout(p = column, nc = 3)
@@ -110,7 +115,7 @@ class HandBonesCreator():
 		self.bones_amount = value
 	
 	def __create_rig(self, *args):
-		self.joints = create_palm(self.fingers_amount, self.bones_amount, self.palm_lengh, self.radius, self.falang_distance)
+		self.joints = create_palm(self.fingers_amount, self.bones_amount, self.palm_lengh, self.radius, self.falang_distance, self.offset_between)
 		print(self.joints)
 		print('creating rig: fingers {0}. bones {1}'.format(self.fingers_amount, self.bones_amount))
 	
@@ -157,6 +162,26 @@ class HandBonesCreator():
 			fingers = self.joints[i]
 			for f in fingers:
 				cmds.setAttr(str(f)+'.radius', self.radius)
+				
+	def _update_offset(self, *args):
+		value = cmds.floatSlider(self.offset_slider, q = True, v = True)
+		cmds.text(self.offset_text, edit = True, label = '% 6.2f' % value)
+		self.offset_between = value
+		
+		if len(self.joints) < 1:
+			return
+		
+		offset = self.offset_between / 2
+ 		distance = self.offset_between / len(self.joints)-1
+		current_offset = offset
+		
+		for i in range(1, len(self.joints)):
+			fingers = self.joints[i]
+			for j in range(1,len(fingers)):
+				y = cmds.getAttr(str(fingers[j])+'.translateY')
+				z = cmds.getAttr(str(fingers[j])+'.translateZ')
+				cmds.setAttr(str(fingers[j])+'.translate', current_offset, y, z)
+			current_offset -= distance
 	
 		
 HandBonesCreator()
