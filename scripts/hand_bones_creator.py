@@ -16,7 +16,7 @@ def create_palm(fingers_amount, falangs_amount, base_distance, display_radius, f
 	joints.append(base_joint)
 	
 	offset = offset_between / 2
- 	distance = offset_between / len(fingers_names)
+ 	distance = offset_between / fingers_amount
 	current_offset = offset
 	
 	# create base fingers
