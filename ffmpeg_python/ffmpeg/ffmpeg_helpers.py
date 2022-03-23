@@ -1,3 +1,4 @@
+# Script contain implementation for interaction with FFMPEG executable
 import subprocess
 import os
 
