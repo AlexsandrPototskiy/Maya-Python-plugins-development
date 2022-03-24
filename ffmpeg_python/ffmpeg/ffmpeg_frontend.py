@@ -8,8 +8,9 @@ from PySide2 import QtWidgets, QtGui
 # 1: implement base layout [DONE]
 # 2: implement base functionality with slots and basic error checking [DONE]
 # 3: implement basic transcoding logic [DONE]
+# 4: implement progress bar []
 
-# 4: implement depth error checking and cmd construction []
+# 5: implement depth error checking and cmd construction []
 
 
 def is_path_valid(path):
