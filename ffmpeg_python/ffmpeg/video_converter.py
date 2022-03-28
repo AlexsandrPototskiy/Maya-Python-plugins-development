@@ -1,16 +1,18 @@
 import os
 import sys
 import subprocess
-from PySide2 import QtWidgets, QtGui
+from PySide2 import QtWidgets
 
 
 # TODO:
 # 1: implement base layout [DONE]
 # 2: implement base functionality with slots and basic error checking [DONE]
 # 3: implement basic transcoding logic [DONE]
-# 4: implement progress bar []
 
+# 4: ffmpeg console output to ui and user notification when task is done []
 # 5: implement depth error checking and cmd construction []
+# 6: implement different os selection for ffmpeg []
+# 7: document code and put to portfolio []
 
 
 def is_path_valid(path):
@@ -24,7 +26,7 @@ def is_path_valid(path):
 FFMPEG_ROOT = os.getcwd() + '/ffmpeg-5.0.0/'
 
 
-def convert_seq_to_video(input_path, output_path, ctr, preset, file_name):
+def transcode_video(input_path, output_path, ctr, preset, file_name):
     print(input_path)
     print(output_path)
     print("Settings: {0}, {1}, {2}".format(ctr, preset, file_name))
@@ -45,7 +47,7 @@ def convert_seq_to_video(input_path, output_path, ctr, preset, file_name):
     subprocess.call(ffmpeg_cmd, shell=True)
 
 
-class FFmpegWindow(QtWidgets.QWidget):
+class ConverterWindow(QtWidgets.QWidget):
 
     # ctr settings
     QUALITY = {'lossless': 17, 'high': 21, 'medium': 30, 'low': 40}
@@ -60,7 +62,7 @@ class FFmpegWindow(QtWidgets.QWidget):
     EXTENSION_DEFAULT = '.mp4'
 
     def __init__(self):
-        super(FFmpegWindow, self).__init__(parent=None)
+        super(ConverterWindow, self).__init__(parent=None)
         self._create_widgets()
         self._create_ui()
         self._create_connections()
@@ -95,7 +97,7 @@ class FFmpegWindow(QtWidgets.QWidget):
 
     # Create ui layout
     def _create_ui(self):
-        self.setWindowTitle('FFmpeg Transcoder')
+        self.setWindowTitle('To MP4 Converter')
         size = (300, 400)
         self.setMinimumSize(size[0], size[1])
         self.setMaximumSize(size[0], size[1])
@@ -187,16 +189,17 @@ class FFmpegWindow(QtWidgets.QWidget):
 
         extension = self._format_cmb.currentData()
         file = "{0}{1}".format(file_name, extension)
-        convert_seq_to_video(input_path, output_path, ctr, preset, file)
+        transcode_video(input_path, output_path, ctr, preset, file)
 
 
 if __name__ == '__main__':
+
     # Temporary solution for BigSur macOS
     os.environ["QT_MAC_WANTS_LAYER"] = "1"
 
     app = QtWidgets.QApplication(sys.argv)
 
-    window = FFmpegWindow()
+    window = ConverterWindow()
     window.show()
 
     app.exec_()
