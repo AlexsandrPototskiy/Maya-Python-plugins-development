@@ -12,7 +12,8 @@ from PySide2 import QtWidgets
 # 4: ffmpeg console output to ui and user notification when task is done []
 # 5: implement depth error checking and cmd construction []
 # 6: implement different os selection for ffmpeg []
-# 7: document code and put to portfolio []
+# 7: try to investigate how to make install for this tool []
+# 8: document code and put to portfolio []
 
 
 def is_path_valid(path):
