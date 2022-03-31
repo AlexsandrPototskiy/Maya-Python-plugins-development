@@ -193,14 +193,10 @@ class ConverterWindow(QtWidgets.QWidget):
         transcode_video(input_path, output_path, ctr, preset, file)
 
 
-if __name__ == '__main__':
-
+def run():
     # Temporary solution for BigSur macOS
     os.environ["QT_MAC_WANTS_LAYER"] = "1"
-
     app = QtWidgets.QApplication(sys.argv)
-
     window = ConverterWindow()
     window.show()
-
     app.exec_()
